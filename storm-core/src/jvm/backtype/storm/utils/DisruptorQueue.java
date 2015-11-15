@@ -141,7 +141,7 @@ public class DisruptorQueue implements IStatefulObject {
     }
 
     private class FlusherThread extends Thread {
-        private final long _flushInterval;
+        private  long _flushInterval;
         private volatile boolean _done;
 
         public FlusherThread(long flushInterval, String name) {
@@ -149,6 +149,11 @@ public class DisruptorQueue implements IStatefulObject {
             _flushInterval = flushInterval;
             _done = false;
             setDaemon(true);
+        }
+
+        public void setFlushInterval(long interval)
+        {
+            _flushInterval = interval;
         }
 
         public void run() {
@@ -240,7 +245,7 @@ public class DisruptorQueue implements IStatefulObject {
     private final RingBuffer<AtomicReference<Object>> _buffer;
     private final Sequence _consumer;
     private final SequenceBarrier _barrier;
-    private final int _inputBatchSize;
+    private int _inputBatchSize;
     private final ConcurrentHashMap<Long, ThreadLocalBatcher> _batchers = new ConcurrentHashMap<Long, ThreadLocalBatcher>();
     private final FlusherThread _flusher;
     private final QueueMetrics _metrics;
@@ -269,10 +274,26 @@ public class DisruptorQueue implements IStatefulObject {
         _metrics = new QueueMetrics();
         //The batch size can be no larger than half the full queue size.
         //This is mostly to avoid contention issues.
-        _inputBatchSize = Math.max(1, Math.min(inputBatchSize, size/2));
-
+        //_inputBatchSize = Math.max(1, Math.min(inputBatchSize, size/2));
+        setBatchSize(inputBatchSize);
         _flusher = new FlusherThread(Math.max(flushInterval, 1), _queueName);
         _flusher.start();
+    }
+
+    // sets and return the new batch size. The return can be used to check
+    // if the batch size was set to the half of buffer size or set to 1
+    public int setBatchSize(int batchSize)
+    {
+        _inputBatchSize = Math.max(1, Math.min(batchSize, _buffer.getBufferSize()/2));
+        return _inputBatchSize;
+    }
+
+    // similar to setBatchSize. Sets and returns the new flush interval
+    public long setFlushInterval(long interval)
+    {
+        long newInterval = Math.max(interval, 1);
+        _flusher.setFlushInterval(newInterval);
+        return newInterval;
     }
 
     public String getName() {
