@@ -165,6 +165,7 @@
     ))
 
 (defn mk-task-data [executor-data task-id]
+  (log-message "Creating task data: " task-id "; " (:component-id executor-data))
   (recursive-map
     :executor-data executor-data
     :task-id task-id
@@ -176,6 +177,7 @@
 
 
 (defn mk-task [executor-data task-id]
+  (log-message "Creating task: " task-id "; " (:component-id executor-data))
   (let [task-data (mk-task-data executor-data task-id)
         storm-conf (:storm-conf executor-data)]
     (doseq [klass (storm-conf TOPOLOGY-AUTO-TASK-HOOKS)]

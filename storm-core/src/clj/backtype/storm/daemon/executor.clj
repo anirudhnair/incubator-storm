@@ -357,9 +357,13 @@
                         (into {})
                         (HashMap.))
         _ (log-message "Loaded executor tasks " (:component-id executor-data) ":" (pr-str executor-id))
+
         report-error-and-die (:report-error-and-die executor-data)
         component-id (:component-id executor-data)
-
+        storm-id (:storm-id executor-data)
+        storm-cluster-state (:storm-cluster-state executor-data)
+        znode-id-size (cluster/dynamic-batching-node-id storm-id component-id executor-id :size)
+        znode-id-interval (cluster/dynamic-batching-node-id storm-id component-id executor-id :interval)
 
         disruptor-handler (mk-disruptor-backpressure-handler executor-data)
         _ (.registerBackpressureCallback (:receive-queue executor-data) disruptor-handler)
@@ -373,7 +377,32 @@
         system-threads [(start-batch-transfer->worker-handler! worker executor-data)]
         handlers (with-error-reaction report-error-and-die
                    (mk-threads executor-data task-datas initial-credentials))
-        threads (concat handlers system-threads)]    
+        threads (concat handlers system-threads)
+
+        callback-dynamic-batching-size (fn cb [dynamic-batching-node-id]
+                                         (let [new_batch_size (.get-dynamic-batching-param storm-cluster-state znode-id-size cb)
+                                               old_batch_size (.getBatchSize (:receive-queue executor-data) )]
+                                           (when-not (= new_batch_size old_batch_size)
+                                             (.setBatchSize (:receive-queue executor-data) new_batch_size)
+                                             (log-message "Set the batch size of " dynamic-batching-node-id " to " new_batch_size))))
+
+
+        callback-dynamic-batching-interval (fn cb [dynamic-batching-node-id]
+                                             (let [
+                                                   new_batch_interval (.get-dynamic-batching-param storm-cluster-state znode-id-interval cb)
+                                                   old_batch_interval (.getFlushInterval (:receive-queue executor-data) )]
+                                               (when-not (= new_batch_interval old_batch_interval)
+                                                 (.setFlushInterval (:receive-queue executor-data) new_batch_interval)
+                                                 (log-message "Set the flush interval of " dynamic-batching-node-id " to " new_batch_interval))))
+
+        _ (when ((:storm-conf executor-data) DYNAMIC-BATCHING-ENABLE )
+            ;; initalize dynamic batching znodes
+            (.setup-dynamic-batching! (:storm-cluster-state executor-data) storm-id component-id executor-id)
+            ;; register dynamic batching callbacks
+            (.get-dynamic-batching-param storm-cluster-state znode-id-interval callback-dynamic-batching-interval)
+            (.get-dynamic-batching-param storm-cluster-state znode-id-size callback-dynamic-batching-size))]
+
+
     (setup-ticks! worker executor-data)
 
     (log-message "Finished loading executor " component-id ":" (pr-str executor-id))
@@ -405,6 +434,7 @@
         (doseq [user-context (map :user-context (vals task-datas))]
           (doseq [hook (.getHooks user-context)]
             (.cleanup hook)))
+        (.remove-dynamic-batching! (:storm-cluster-state executor-data) storm-id component-id executor-id)
         (.disconnect (:storm-cluster-state executor-data))
         (when @(:open-or-prepare-was-called? executor-data)
           (doseq [obj (map :object (vals task-datas))]

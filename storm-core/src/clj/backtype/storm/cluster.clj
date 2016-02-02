@@ -203,6 +203,10 @@
   (topology-backpressure [this storm-id callback])
   (setup-backpressure! [this storm-id])
   (remove-worker-backpressure! [this storm-id node port])
+  (get-dynamic-batching-param [this dynamic-batch-node-id callback])
+  (set-dynamic-batching-param! [this dynamic-batch-node-id data])
+  (setup-dynamic-batching! [this storm-id component-id executor-id])
+  (remove-dynamic-batching! [this storm-id component-id executor-id])
   (activate-storm! [this storm-id storm-base])
   (update-storm! [this storm-id new-elems])
   (remove-storm-base! [this storm-id])
@@ -223,6 +227,7 @@
 (def SUPERVISORS-ROOT "supervisors")
 (def WORKERBEATS-ROOT "workerbeats")
 (def BACKPRESSURE-ROOT "backpressure")
+(def DYNAMIC-BATCHING-ROOT "dynamic-batching")
 (def ERRORS-ROOT "errors")
 (def CODE-DISTRIBUTOR-ROOT "code-distributor")
 (def NIMBUSES-ROOT "nimbuses")
@@ -234,6 +239,7 @@
 (def SUPERVISORS-SUBTREE (str "/" SUPERVISORS-ROOT))
 (def WORKERBEATS-SUBTREE (str "/" WORKERBEATS-ROOT))
 (def BACKPRESSURE-SUBTREE (str "/" BACKPRESSURE-ROOT))
+(def DYNAMIC-BATCHING-SUBTREE (str "/" DYNAMIC-BATCHING-ROOT))
 (def ERRORS-SUBTREE (str "/" ERRORS-ROOT))
 (def CODE-DISTRIBUTOR-SUBTREE (str "/" CODE-DISTRIBUTOR-ROOT))
 (def NIMBUSES-SUBTREE (str "/" NIMBUSES-ROOT))
@@ -275,6 +281,16 @@
 (defn backpressure-path
   [storm-id node port]
   (str (backpressure-storm-root storm-id) "/" node "-" port))
+
+(defn dynamic-batching-node-id
+  [storm-id comp-id executor-id field-type]
+  (if (= field-type :size)
+    (str storm-id "-" comp-id executor-id "-size")
+    (str storm-id "-" comp-id executor-id "-interval")))
+
+(defn dynamic-batching-path
+  [storm-id comp-id executor-id field_type]
+  (str DYNAMIC-BATCHING-SUBTREE "/" (dynamic-batching-node-id storm-id comp-id executor-id field_type)))
 
 (defn error-storm-root
   [storm-id]
@@ -351,6 +367,7 @@
         assignment-version-callback (atom {})
         supervisors-callback (atom nil)
         backpressure-callback (atom {})   ;; we want to reigister a topo directory getChildren callback for all workers of this dir
+        dynamic-batching-callback (atom {}) ;; the call back will forward the call to workers, and then to the appropritate executor
         assignments-callback (atom nil)
         storm-base-callback (atom {})
         code-distributor-callback (atom nil)
@@ -373,6 +390,7 @@
                          CREDENTIALS-ROOT (issue-map-callback! credentials-callback (first args))
                          LOGCONFIG-ROOT (issue-map-callback! log-config-callback (first args))
                          BACKPRESSURE-ROOT (issue-map-callback! backpressure-callback (first args))
+                         DYNAMIC-BATCHING-ROOT (issue-map-callback! dynamic-batching-callback (first args))
                          ;; this should never happen
                          (exit-process! 30 "Unknown callback for subtree " subtree args)))))]
     (doseq [p [ASSIGNMENTS-SUBTREE STORMS-SUBTREE SUPERVISORS-SUBTREE WORKERBEATS-SUBTREE ERRORS-SUBTREE CODE-DISTRIBUTOR-SUBTREE NIMBUSES-SUBTREE
@@ -538,7 +556,7 @@
         (let [path (backpressure-storm-root storm-id)
               children (get-children cluster-state path (not-nil? callback))]
               (> (count children) 0)))
-      
+
       (setup-backpressure!
         [this storm-id]
         (mkdirs cluster-state (backpressure-storm-root storm-id) acls))
@@ -546,6 +564,33 @@
       (remove-worker-backpressure!
         [this storm-id node port]
         (delete-node cluster-state (backpressure-path storm-id node port)))
+
+      (get-dynamic-batching-param
+        [this dynamic-batch-node-id callback]
+        "this gets called from the callback function registered as the zk watch. the callback is
+        set in executor.clj"
+        (when callback
+          (swap! dynamic-batching-callback assoc dynamic-batch-node-id callback))
+        (let [path (str DYNAMIC-BATCHING-SUBTREE "/" dynamic-batch-node-id)]
+          (maybe-deserialize (get-data cluster-state path (not-nil? callback)) Long)))
+
+      (set-dynamic-batching-param!
+        [this dynamic-batch-node-id data]
+        (let [path (str DYNAMIC-BATCHING-SUBTREE "/" dynamic-batch-node-id)]
+          (set-data cluster-state path (Utils/serialize data) acls)))
+
+
+      (setup-dynamic-batching!
+        [this storm-id component-id executor-id]
+        "this method is called during the creation of each of the executor"
+        (mkdirs cluster-state (dynamic-batching-path storm-id component-id executor-id :size) acls)
+        (mkdirs cluster-state (dynamic-batching-path storm-id component-id executor-id :interval) acls))
+
+      (remove-dynamic-batching!
+        [this storm-id component-id executor-id]
+        "this method is called when an executor exit"
+        (delete-node cluster-state (dynamic-batching-path storm-id component-id executor-id :size))
+        (delete-node cluster-state (dynamic-batching-path storm-id component-id executor-id :interval)))
 
       (teardown-topology-errors!
         [this storm-id]

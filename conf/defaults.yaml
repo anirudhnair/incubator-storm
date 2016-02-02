@@ -159,6 +159,9 @@ topology.backpressure.enable: true
 backpressure.disruptor.high.watermark: 0.9
 backpressure.disruptor.low.watermark: 0.4
 
+# control if dynamic batching should be on/off
+dynamic.batching.enable: true
+
 zmq.threads: 1
 zmq.linger.millis: 5000
 zmq.hwm: 0

@@ -155,6 +155,7 @@ public class DisruptorQueue implements IStatefulObject {
         {
             _flushInterval = interval;
         }
+        public long getFlushInterval() { return _flushInterval; }
 
         public void run() {
             try {
@@ -295,6 +296,12 @@ public class DisruptorQueue implements IStatefulObject {
         _flusher.setFlushInterval(newInterval);
         return newInterval;
     }
+
+    // getter methods for batch size and flush interval
+
+    public int getBatchSize() { return _inputBatchSize; }
+
+    public long getFlushInterval() {  return _flusher.getFlushInterval(); }
 
     public String getName() {
         return _queueName;
