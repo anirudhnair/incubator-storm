@@ -285,8 +285,8 @@
 (defn dynamic-batching-node-id
   [storm-id comp-id executor-id field-type]
   (if (= field-type :size)
-    (str storm-id "-" comp-id executor-id "-size")
-    (str storm-id "-" comp-id executor-id "-interval")))
+    (str storm-id "-" comp-id "-" (first executor-id) (last executor-id) "-size")
+    (str storm-id "-" comp-id "-" (first executor-id) (last executor-id) "-interval")))
 
 (defn dynamic-batching-path
   [storm-id comp-id executor-id field_type]
@@ -571,8 +571,10 @@
         set in executor.clj"
         (when callback
           (swap! dynamic-batching-callback assoc dynamic-batch-node-id callback))
-        (let [path (str DYNAMIC-BATCHING-SUBTREE "/" dynamic-batch-node-id)]
-          (maybe-deserialize (get-data cluster-state path (not-nil? callback)) Long)))
+        (let [path (str DYNAMIC-BATCHING-SUBTREE "/" dynamic-batch-node-id)
+              znode_data (get-data cluster-state path (not-nil? callback))]
+          (if znode_data
+            (apply str (map #(char (bit-and % 255)) znode_data)))))
 
       (set-dynamic-batching-param!
         [this dynamic-batch-node-id data]
@@ -584,7 +586,8 @@
         [this storm-id component-id executor-id]
         "this method is called during the creation of each of the executor"
         (mkdirs cluster-state (dynamic-batching-path storm-id component-id executor-id :size) acls)
-        (mkdirs cluster-state (dynamic-batching-path storm-id component-id executor-id :interval) acls))
+        (mkdirs cluster-state (dynamic-batching-path storm-id component-id executor-id :interval) acls)
+        (log-message "Creating znodes for executor: " storm-id " " component-id " " executor-id))
 
       (remove-dynamic-batching!
         [this storm-id component-id executor-id]

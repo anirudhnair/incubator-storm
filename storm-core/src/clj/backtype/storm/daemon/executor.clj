@@ -362,6 +362,7 @@
         component-id (:component-id executor-data)
         storm-id (:storm-id executor-data)
         storm-cluster-state (:storm-cluster-state executor-data)
+
         znode-id-size (cluster/dynamic-batching-node-id storm-id component-id executor-id :size)
         znode-id-interval (cluster/dynamic-batching-node-id storm-id component-id executor-id :interval)
 
@@ -380,7 +381,7 @@
         threads (concat handlers system-threads)
 
         callback-dynamic-batching-size (fn cb [dynamic-batching-node-id]
-                                         (let [new_batch_size (.get-dynamic-batching-param storm-cluster-state znode-id-size cb)
+                                         (let [new_batch_size (read-string (.get-dynamic-batching-param storm-cluster-state znode-id-size cb))
                                                old_batch_size (.getBatchSize (:receive-queue executor-data) )]
                                            (when-not (= new_batch_size old_batch_size)
                                              (.setBatchSize (:receive-queue executor-data) new_batch_size)
@@ -389,7 +390,7 @@
 
         callback-dynamic-batching-interval (fn cb [dynamic-batching-node-id]
                                              (let [
-                                                   new_batch_interval (.get-dynamic-batching-param storm-cluster-state znode-id-interval cb)
+                                                   new_batch_interval (read-string (.get-dynamic-batching-param storm-cluster-state znode-id-interval cb))
                                                    old_batch_interval (.getFlushInterval (:receive-queue executor-data) )]
                                                (when-not (= new_batch_interval old_batch_interval)
                                                  (.setFlushInterval (:receive-queue executor-data) new_batch_interval)
