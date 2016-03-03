@@ -153,6 +153,25 @@ public class GeneralTopologyContext implements JSONAware {
         return ret;
     }
 
+    /**
+     * Get infotmation of out-going streams of the specified component
+     *
+     * @return Map from out-component to stream id
+     */
+
+    public Map<String,String> getOutComponentStream(String componentId) {
+        Map<String, String> ret = new HashMap<String,String>();
+        for(String otherComponentId: getComponentIds()) {
+            Map<GlobalStreamId, Grouping> inputs = getComponentCommon(otherComponentId).get_inputs();
+            for(GlobalStreamId id: inputs.keySet()) {
+                if(id.get_componentId().equals(componentId)) {
+                    ret.put(otherComponentId,id.get_streamId());
+                }
+            }
+        }
+        return ret;
+    }
+
     @Override
     public String toJSONString() {
         Map obj = new HashMap();

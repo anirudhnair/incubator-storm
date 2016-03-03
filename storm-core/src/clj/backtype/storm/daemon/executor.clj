@@ -136,6 +136,24 @@
          (into {})
          (HashMap.)))
 
+(defn outbound-streams
+  "Return map of out-component to stream"
+  [^WorkerTopologyContext worker-context component-id]
+  (clojurify-structure (.getOutComponentStream worker-context component-id)))
+
+(defn custom-outbound-grouper
+  [^WorkerTopologyContext worker-context component-id]
+  (->> (.getTargets worker-context component-id)
+       clojurify-structure
+       (map (fn [[stream-id component->grouping]]
+              ( ->> (map (fn [[component thrift-grouping]]
+                     (when (= (thrift/grouping-type thrift-grouping) :custom-serialized)
+                       [component (Utils/javaDeserialize (.get_custom_serialized thrift-grouping) Serializable)]))
+                     component->grouping)
+                    (into {}))))
+       (merge)
+       (HashMap.)))
+
 (defn executor-type [^WorkerTopologyContext context component-id]
   (let [topology (.getRawTopology context)
         spouts (.get_spouts topology)
@@ -171,7 +189,9 @@
   (render-stats [this])
   (get-executor-id [this])
   (credentials-changed [this creds])
-  (get-backpressure-flag [this]))
+  (get-backpressure-flag [this])
+  (get-prob-dist [this out-component-id])
+  (set-prob-dist [this out-component-id prob-dist]))
 
 (defn throttled-report-error-fn [executor]
   (let [storm-conf (:storm-conf executor)
@@ -241,6 +261,8 @@
      :interval->task->metric-registry (HashMap.)
      :task->component (:task->component worker)
      :stream->component->grouper (outbound-components worker-context component-id)
+     :out-component->stream (outbound-streams worker-context component-id)
+     :out-component->custom_grouping_obj (custom-outbound-grouper worker-context component-id))
      :report-error (throttled-report-error-fn <>)
      :report-error-and-die (fn [error]
                              ((:report-error <>) error)
@@ -422,6 +444,14 @@
             [[nil (TupleImpl. context [creds] Constants/SYSTEM_TASK_ID Constants/CREDENTIALS_CHANGED_STREAM_ID)]])))
       (get-backpressure-flag [this]
         @(:backpressure executor-data))
+      (get-prob-dist [this out-component-id]
+        (let [component->grouper (:out-component->custom_grouping_obj executor-data)
+              grouper (get component->grouper out-component-id)]
+          (.getProbDist grouper)))
+      (set-prob-dist [this out-component-id prob-dist]
+         (let [component->grouper (:out-component->custom_grouping_obj executor-data)
+               grouper (get component->grouper out-component-id)]
+           (.setProbDist grouper prob-dist))
       Shutdownable
       (shutdown
         [this]
