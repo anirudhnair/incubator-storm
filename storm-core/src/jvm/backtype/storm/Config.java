@@ -1148,6 +1148,12 @@ public class Config extends HashMap<String, Object> {
     @isBoolean
     public static final String TOPOLOGY_BACKPRESSURE_ENABLE = "topology.backpressure.enable";
 
+
+    /**
+     * Whether to enable dynamic batching
+     */
+     @isBoolean
+     public static final String DYNAMIC_BATCHING_ENABLE = "dynamic.batching.enable";
     /**
      * This signifies the tuple congestion in a disruptor queue.
      * When the used ratio of a disruptor queue is higher than the high watermark,

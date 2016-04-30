@@ -1,0 +1,16 @@
+<TopologyConfig>
+    <Topology name="RollingSort">
+        <Component name="spout" instances="4" />
+        <Component name="sort" instances="4" />
+    </Topology>
+    <Topology name="SOL">
+        <Component name="spout" instances="4" />
+        <Component name="bolt" instances="4" levels="3" />
+    </Topology>
+    <Topology name="WordCount">
+        <Component name="spout" instances="4" />
+        <Component name="split" instances="4" />
+        <Component name="count" instances="4" />
+    </Topology>
+
+</TopologyConfig>

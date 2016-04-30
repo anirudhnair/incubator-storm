@@ -53,7 +53,7 @@ storm.meta.serialization.delegate: "backtype.storm.serialization.GzipThriftSeria
 storm.codedistributor.class: "backtype.storm.codedistributor.LocalFileSystemCodeDistributor"
 
 ### nimbus.* configs are for the master
-nimbus.seeds : ["localhost"]
+nimbus.seeds : ["tarekc67.cs.illinois.edu"]
 nimbus.thrift.port: 6627
 nimbus.thrift.threads: 64
 nimbus.thrift.max_buffer_size: 1048576
@@ -160,6 +160,9 @@ task.credentials.poll.secs: 30
 topology.backpressure.enable: true
 backpressure.disruptor.high.watermark: 0.9
 backpressure.disruptor.low.watermark: 0.4
+
+# control if dynamic batching should be on/off
+dynamic.batching.enable: true
 
 zmq.threads: 1
 zmq.linger.millis: 5000

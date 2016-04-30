@@ -1,0 +1,311 @@
+package org.apache.storm;
+
+import backtype.storm.Config;
+import backtype.storm.generated.*;
+import backtype.storm.metric.HttpForwardingMetricsServer;
+import backtype.storm.metric.api.IMetricsConsumer;
+import backtype.storm.utils.NimbusClient;
+import backtype.storm.utils.Utils;
+import org.HdrHistogram.Histogram;
+import org.apache.thrift.TException;
+
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ * Created by anirudhnair on 3/4/16.
+ */
+public class StatsCollector {
+
+
+
+    class HttpMetricsServerImpl extends HttpForwardingMetricsServer
+    {
+        private TopologyStat m_oTopoStat;
+
+        public HttpMetricsServerImpl(Map conf, TopologyStat topoStat) {
+            super(conf);
+            m_oTopoStat = topoStat;
+        }
+
+        @Override
+        public void handle(IMetricsConsumer.TaskInfo taskInfo, Collection<IMetricsConsumer.DataPoint> dataPoints) {
+
+            for (IMetricsConsumer.DataPoint dp: dataPoints) {
+                if ("comp-lat-histo".equals(dp.name) && dp.value instanceof Histogram) {
+                    m_oTopoStat.AddLatency((Histogram)dp.value);
+                }
+            }
+        }
+    }
+
+    private Nimbus.Client                   m_oNimbus;
+    private Thread 					        m_oNodeStatThread;
+    private Thread                          m_oTopoStatThread;
+    private ArrayList<String>               m_lNodes; //list of worker nodes in the cluster
+    private ArrayList<String>               m_lTopologyNames; // topologies for which the stats need to be collected
+    private Lock                            m_topo_list_lock;
+    private Map<String, NodeStatClient>     m_mNodetoStatClient;
+    private Logger                          m_oLogger;
+    private Map<String,NodeStat>            m_mNodetoStat;
+    private Map<String,TopologyStat>        m_mTopotoStat;
+    private Map<String,HttpMetricsServerImpl> m_mTopotoServer;
+
+    public int Initialize(Nimbus.Client oClient, Logger logger) throws Exception
+    {
+        m_oLogger = logger;
+        //instantiate
+        m_lNodes = new ArrayList<>();
+        m_mNodetoStat = new HashMap<>();
+        m_mTopotoStat = new HashMap<>();
+        m_lTopologyNames = new ArrayList<>();
+        m_mNodetoStatClient = new HashMap<>();
+        m_mTopotoServer = new HashMap<>();
+        m_topo_list_lock = new ReentrantLock();
+
+
+        m_oNimbus = oClient;
+        // get the nodelist
+        List<SupervisorSummary> superviosrList = m_oNimbus.getClusterInfo().get_supervisors();
+        for(SupervisorSummary sup: superviosrList)
+        {
+            m_lNodes.add(sup.get_host());
+        }
+
+        // create the statclient for all the nodes. the stat server should be stared in al the nodes
+        for(String nodeIp: m_lNodes)
+        {
+            NodeStatClient client = new NodeStatClient();
+            client.Init(nodeIp,m_oLogger);
+            m_mNodetoStatClient.put(nodeIp, client);
+            m_mNodetoStat.put(nodeIp,new NodeStat());
+        }
+
+
+
+        return Common.SUCCESS;
+    }
+
+    private void GetNodeStatFromTopologyInfo() throws Exception
+    {
+        Map<String,Long> iptoMsgCount = new HashMap<>();
+        for(String nodeIp: m_lNodes)
+        {
+            iptoMsgCount.put(nodeIp, (long)0);
+        }
+        ClusterSummary summary = m_oNimbus.getClusterInfo();
+        String id = null;
+        for (TopologySummary ts: summary.get_topologies()) {
+            id = ts.get_id();
+            TopologyInfo info = m_oNimbus.getTopologyInfo(id);
+            for (ExecutorSummary exec: info.get_executors()) {
+                String sHost = exec.get_host();
+                // get transffered count
+                long msg_count = 0;
+                Map<String,Long> all_time_stat_common = exec.get_stats().get_transferred().get(":all-time");
+                for(Long count: all_time_stat_common.values())
+                {
+                    msg_count+=count;
+                }
+                // if bolt get executed count
+                if(exec.get_stats().get_specific().is_set_bolt())
+                {
+                    Map<GlobalStreamId, Long> all_time_bolt = exec.get_stats().get_specific().get_bolt().
+                            get_executed().get(":all-time");
+                    for(Long count: all_time_bolt.values())
+                    {
+                        msg_count+=count;
+                    }
+                }
+                Long curr_count = iptoMsgCount.get(sHost);
+                iptoMsgCount.put(sHost,curr_count+msg_count);
+            }
+
+        }
+
+        for (Map.Entry<String, Long> entry : iptoMsgCount.entrySet()) {
+            String key = entry.getKey();
+            Long value = entry.getValue();
+            m_mNodetoStat.get(key).AddMessageCount(value);
+        }
+
+    }
+
+    public int StartNodeStatCollection(final long time_ms)
+    {
+        m_oNodeStatThread = new Thread(new Runnable() {
+            public void run() {
+                // each node get mem and cpu info
+
+                while(true) {
+                    try {
+                        Thread.sleep(time_ms);
+                    } catch (InterruptedException e1) {
+                        m_oLogger.Error(m_oLogger.StackTraceToString(e1));
+                    }
+
+                    for (String nodeIp : m_lNodes) {
+                        try {
+                            double cpuUsage = m_mNodetoStatClient.get(nodeIp).CPUUsage();
+                            double memUsage = m_mNodetoStatClient.get(nodeIp).MemUsage();
+                            double powerUsage = m_mNodetoStatClient.get(nodeIp).PowerUsgae();
+                            m_mNodetoStat.get(nodeIp).AddCPUUsage((float) cpuUsage);
+                            m_mNodetoStat.get(nodeIp).AddMemUsgae((float) memUsage);
+                            m_mNodetoStat.get(nodeIp).AddPowerUsage((float)powerUsage);
+                        } catch (TException e) {
+                            m_oLogger.StackTraceToString(e);
+                            return;
+                        }
+                    }
+
+                    // from each topology get the total messages in each node
+                    try {
+                        GetNodeStatFromTopologyInfo();
+                    } catch (Exception e) {
+                        m_oLogger.StackTraceToString(e);
+                    }
+                }
+
+            }
+        });
+        return Common.SUCCESS;
+    }
+
+
+    /*
+    *   Topology stat collection is for acked tupls and failed tuples count.
+    *   For latency there is a storm metrics way of collecting ata using a httpserver
+     */
+    public int StartTopologyStatCollection(final int time_ms) throws Exception
+    {
+        m_oTopoStatThread = new Thread(new Runnable() {
+            public void run() {
+
+                while(true) {
+                    try {
+                        Thread.sleep(time_ms);
+                    } catch (InterruptedException e1) {
+                        m_oLogger.Error(m_oLogger.StackTraceToString(e1));
+                    }
+                    // lock the topology list since topology can be added any time
+                    ClusterSummary summary = null;
+                    try {
+                        summary = m_oNimbus.getClusterInfo();
+                    } catch (Exception e) {
+                        m_oLogger.StackTraceToString(e);                    }
+                    m_topo_list_lock.lock();
+                    // go through the topology list and get stats for each topology
+                    for( String sTopoName: m_lTopologyNames) {
+                        String id = null;
+                        for (TopologySummary ts: summary.get_topologies()) {
+                            if (sTopoName.equals(ts.get_name())) {
+                                id = ts.get_id();
+                            }
+                        }
+
+                        if(id == null)
+                        {
+                            m_oLogger.Error("Unable to find topology - " + sTopoName + " in the cluster summary from nimbus");
+                            continue;
+                        }
+
+                        TopologyInfo info = null;
+                        try {
+                            info = m_oNimbus.getTopologyInfo(id);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        long acked = 0;
+                        long failed = 0;
+                        for (ExecutorSummary exec: info.get_executors()) {
+                            if ("spout".equals(exec.get_component_id())) {
+                                SpoutStats stats = exec.get_stats().get_specific().get_spout();
+                                Map<String, Long> failedMap = stats.get_failed().get(":all-time");
+                                Map<String, Long> ackedMap = stats.get_acked().get(":all-time");
+                                if (ackedMap != null) {
+                                    for (String key: ackedMap.keySet()) {
+                                        if (failedMap != null) {
+                                            Long tmp = failedMap.get(key);
+                                            if (tmp != null) {
+                                                failed += tmp;
+                                            }
+                                        }
+                                        long ackVal = ackedMap.get(key);
+                                        acked += ackVal;
+                                    }
+                                }
+                            }
+                        }
+                        m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
+                        m_mTopotoStat.get(sTopoName).UpdateFailedCount(failed);
+                    }
+                    m_topo_list_lock.unlock();
+
+
+
+                }
+
+            }
+        });
+        return Common.SUCCESS;
+    }
+
+    /*
+    add topology name to list and also setup the httpserver
+     */
+    public int AddTopologyToStatCollection(String topo_name, Config conf) {
+        m_topo_list_lock.lock();
+        m_lTopologyNames.add(topo_name);
+        // create topostat
+        TopologyStat stat = new TopologyStat();
+        m_mTopotoStat.put(topo_name, stat);
+        // create server
+        HttpMetricsServerImpl server = new HttpMetricsServerImpl(conf,stat);
+        m_mTopotoServer.put(topo_name,server);
+        server.serve();
+        String url = server.getUrl();
+        conf.registerMetricsConsumer(backtype.storm.metric.LoggingMetricsConsumer.class);
+        conf.registerMetricsConsumer(backtype.storm.metric.HttpForwardingMetricsConsumer.class, url, 1);
+        m_topo_list_lock.unlock();
+        return Common.SUCCESS;
+    };
+
+    public ArrayList<String> GetNodeList()
+    {
+        return m_lNodes;
+    }
+
+    public NodeStat GetNodeStat(String sIP)
+    {
+        NodeStat nodeStat = null;
+        nodeStat = m_mNodetoStat.get(sIP);
+        return nodeStat;
+    }
+
+    public TopologyStat GetTopoStat(String sTopoName)
+    {
+        TopologyStat topoStat = null;
+        topoStat = m_mTopotoStat.get(sTopoName);
+        return topoStat;
+    }
+
+    public static void main( String[] args ) throws Exception {
+        System.out.println( "Hello World!" );
+        Map clusterConf = Utils.readStormConfig();
+        Nimbus.Client oNimbus = NimbusClient.getConfiguredClient(clusterConf).getClient();
+        ClusterSummary summary = oNimbus.getClusterInfo();
+        String id = null;
+        for (TopologySummary ts: summary.get_topologies()) {
+            id = ts.get_id();
+            TopologyInfo info = oNimbus.getTopologyInfo(id);
+            for (ExecutorSummary exec: info.get_executors()) {
+
+            }
+
+        }
+
+    }
+
+}
+

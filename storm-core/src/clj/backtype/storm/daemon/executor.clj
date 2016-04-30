@@ -136,6 +136,24 @@
          (into {})
          (HashMap.)))
 
+(defn outbound-streams
+  "Return map of out-component to stream"
+  [^WorkerTopologyContext worker-context component-id]
+  (clojurify-structure (.getOutComponentStream worker-context component-id)))
+
+(defn custom-outbound-grouper
+  [^WorkerTopologyContext worker-context component-id]
+  (->> (.getTargets worker-context component-id)
+       clojurify-structure
+       (map (fn [[stream-id component->grouping]]
+              ( ->> (map (fn [[component thrift-grouping]]
+                     (when (= (thrift/grouping-type thrift-grouping) :custom-serialized)
+                       [component (Utils/javaDeserialize (.get_custom_serialized thrift-grouping) Serializable)]))
+                     component->grouping)
+                    (into {}))))
+       (merge)
+       (HashMap.)))
+
 (defn executor-type [^WorkerTopologyContext context component-id]
   (let [topology (.getRawTopology context)
         spouts (.get_spouts topology)
@@ -171,7 +189,9 @@
   (render-stats [this])
   (get-executor-id [this])
   (credentials-changed [this creds])
-  (get-backpressure-flag [this]))
+  (get-backpressure-flag [this])
+  (get-prob-dist [this out-component-id])
+  (set-prob-dist [this out-component-id prob-dist]))
 
 (defn throttled-report-error-fn [executor]
   (let [storm-conf (:storm-conf executor)
@@ -241,6 +261,8 @@
      :interval->task->metric-registry (HashMap.)
      :task->component (:task->component worker)
      :stream->component->grouper (outbound-components worker-context component-id)
+     :out-component->stream (outbound-streams worker-context component-id)
+     :out-component->custom_grouping_obj (custom-outbound-grouper worker-context component-id)
      :report-error (throttled-report-error-fn <>)
      :report-error-and-die (fn [error]
                              ((:report-error <>) error)
@@ -359,7 +381,11 @@
         _ (log-message "Loaded executor tasks " (:component-id executor-data) ":" (pr-str executor-id))
         report-error-and-die (:report-error-and-die executor-data)
         component-id (:component-id executor-data)
+        storm-id (:storm-id executor-data)
+        storm-cluster-state (:storm-cluster-state executor-data)
 
+        znode-id-size (cluster/dynamic-batching-node-id storm-id component-id executor-id :size)
+        znode-id-interval (cluster/dynamic-batching-node-id storm-id component-id executor-id :interval)
 
         disruptor-handler (mk-disruptor-backpressure-handler executor-data)
         _ (.registerBackpressureCallback (:receive-queue executor-data) disruptor-handler)
@@ -373,7 +399,32 @@
         system-threads [(start-batch-transfer->worker-handler! worker executor-data)]
         handlers (with-error-reaction report-error-and-die
                    (mk-threads executor-data task-datas initial-credentials))
-        threads (concat handlers system-threads)]    
+        threads (concat handlers system-threads)
+
+        callback-dynamic-batching-size (fn cb [dynamic-batching-node-id]
+                                         (let [new_batch_size (read-string (.get-dynamic-batching-param storm-cluster-state znode-id-size cb))
+                                               old_batch_size (.getBatchSize (:receive-queue executor-data) )]
+                                           (when-not (= new_batch_size old_batch_size)
+                                             (.setBatchSize (:receive-queue executor-data) new_batch_size)
+                                             (log-message "Set the batch size of " dynamic-batching-node-id " to " new_batch_size))))
+
+
+        callback-dynamic-batching-interval (fn cb [dynamic-batching-node-id]
+                                             (let [
+                                                   new_batch_interval (read-string (.get-dynamic-batching-param storm-cluster-state znode-id-interval cb))
+                                                   old_batch_interval (.getFlushInterval (:receive-queue executor-data) )]
+                                               (when-not (= new_batch_interval old_batch_interval)
+                                                 (.setFlushInterval (:receive-queue executor-data) new_batch_interval)
+                                                 (log-message "Set the flush interval of " dynamic-batching-node-id " to " new_batch_interval))))
+
+        _ (when ((:storm-conf executor-data) DYNAMIC-BATCHING-ENABLE )
+            ;; initalize dynamic batching znodes
+            (.setup-dynamic-batching! (:storm-cluster-state executor-data) storm-id component-id executor-id)
+            ;; register dynamic batching callbacks
+            (.get-dynamic-batching-param storm-cluster-state znode-id-interval callback-dynamic-batching-interval)
+            (.get-dynamic-batching-param storm-cluster-state znode-id-size callback-dynamic-batching-size))]
+
+
     (setup-ticks! worker executor-data)
 
     (log-message "Finished loading executor " component-id ":" (pr-str executor-id))
@@ -392,6 +443,14 @@
             [[nil (TupleImpl. context [creds] Constants/SYSTEM_TASK_ID Constants/CREDENTIALS_CHANGED_STREAM_ID)]])))
       (get-backpressure-flag [this]
         @(:backpressure executor-data))
+      (get-prob-dist [this out-component-id]
+        (let [component->grouper (:out-component->custom_grouping_obj executor-data)
+              grouper (get component->grouper out-component-id)]
+          (.getProbDist grouper)))
+      (set-prob-dist [this out-component-id prob-dist]
+         (let [component->grouper (:out-component->custom_grouping_obj executor-data)
+               grouper (get component->grouper out-component-id)]
+           (.setProbDist grouper prob-dist)))
       Shutdownable
       (shutdown
         [this]
@@ -405,6 +464,7 @@
         (doseq [user-context (map :user-context (vals task-datas))]
           (doseq [hook (.getHooks user-context)]
             (.cleanup hook)))
+        (.remove-dynamic-batching! (:storm-cluster-state executor-data) storm-id component-id executor-id)
         (.disconnect (:storm-cluster-state executor-data))
         (when @(:open-or-prepare-was-called? executor-data)
           (doseq [obj (map :object (vals task-datas))]
