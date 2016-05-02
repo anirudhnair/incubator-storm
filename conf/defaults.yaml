@@ -53,7 +53,7 @@ storm.meta.serialization.delegate: "backtype.storm.serialization.GzipThriftSeria
 storm.codedistributor.class: "backtype.storm.codedistributor.LocalFileSystemCodeDistributor"
 
 ### nimbus.* configs are for the master
-nimbus.seeds : ["tarekc67.cs.illinois.edu"]
+nimbus.seeds : ["172.22.68.61"]
 nimbus.thrift.port: 6627
 nimbus.thrift.threads: 64
 nimbus.thrift.max_buffer_size: 1048576

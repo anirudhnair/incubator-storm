@@ -18,7 +18,7 @@ public final class Common {
     public static final Map<String, Long> mapNodetoPort = Collections.unmodifiableMap(
         new HashMap<String, Long> () {{
             put("172.22.68.60",24L); //tarekc41
-            put("172.22.68.61",23L);
+            put("172.22.68.61",23L); // nimbus
             put("172.22.68.62",22L);
             put("172.22.68.63",21L);
             put("172.22.68.64",20L);
@@ -38,6 +38,8 @@ public final class Common {
             put("172.22.68.78",4L); // node down
             put("172.22.68.79",3L); // tarekc60
         }});
+
+    public static final String NIMBUS = "172.22.68.61";
 
     public static String GeneratePowerCommand(String sNodeIP)
     {
