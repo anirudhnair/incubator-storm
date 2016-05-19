@@ -39,6 +39,7 @@
              [cluster :as cluster] [disruptor :as disruptor] [stats :as stats]])
   (:require [backtype.storm.daemon [task :as task]])
   (:require [backtype.storm.daemon.builtin-metrics :as builtin-metrics])
+  (:require [clojure.string :as str])
   (:require [clojure.set :as set]))
 
 (defn- mk-fields-grouper [^Fields out-fields ^Fields group-fields ^List target-tasks]
@@ -129,6 +130,7 @@
                [stream-id
                 (outbound-groupings
                   worker-context
+
                   component-id
                   stream-id
                   (.getComponentOutputFields worker-context component-id stream-id)
@@ -350,6 +352,7 @@
      (if (seq data-points)
        (task/send-unanchored task-data Constants/METRICS_STREAM_ID [task-info data-points]))))
 
+
 (defn setup-ticks! [worker executor-data]
   (let [storm-conf (:storm-conf executor-data)
         tick-time-secs (storm-conf TOPOLOGY-TICK-TUPLE-FREQ-SECS)
@@ -386,6 +389,7 @@
 
         znode-id-size (cluster/dynamic-batching-node-id storm-id component-id executor-id :size)
         znode-id-interval (cluster/dynamic-batching-node-id storm-id component-id executor-id :interval)
+        out-components (keys (:out-component->custom_grouping_obj executor-data))
 
         disruptor-handler (mk-disruptor-backpressure-handler executor-data)
         _ (.registerBackpressureCallback (:receive-queue executor-data) disruptor-handler)
@@ -417,12 +421,33 @@
                                                  (.setFlushInterval (:receive-queue executor-data) new_batch_interval)
                                                  (log-message "Set the flush interval of " dynamic-batching-node-id " to " new_batch_interval))))
 
+
+        callback-out-comp-load (fn cb [out-comp-load-node-id]
+                                 (let [out-comp-load-info (.get-outbound-component-load
+                                                                         storm-cluster-state out-comp-load-node-id cb)
+                                       ; get src comp id
+                                       src_comp (.SrcComp out-comp-load-info)
+                                       ; get dest comp id
+                                       dest_comp (.DestComp out-comp-load-info)
+                                       prob-dist (.GetTaskLoad out-comp-load-info)
+                                       component->grouper (:out-component->custom_grouping_obj executor-data)
+                                       out-component-id (last (str/split out-comp-load-node-id #"-"))
+                                       grouper (get component->grouper out-component-id)]
+                                   (.setProbDist grouper prob-dist)
+                                   (log-message "out-comp-load-info: Src:" src_comp " Dest:" dest_comp " New Prob: "
+                                                (.toString prob-dist))))
+
         _ (when ((:storm-conf executor-data) DYNAMIC-BATCHING-ENABLE )
             ;; initalize dynamic batching znodes
             (.setup-dynamic-batching! (:storm-cluster-state executor-data) storm-id component-id executor-id)
             ;; register dynamic batching callbacks
             (.get-dynamic-batching-param storm-cluster-state znode-id-interval callback-dynamic-batching-interval)
-            (.get-dynamic-batching-param storm-cluster-state znode-id-size callback-dynamic-batching-size))]
+            (map (fn [out-comp]
+                   (let [znode-id (cluster/out-comp-load-node-id storm-id component-id executor-id out-comp) ]
+                     (.setup-outbound-comp-znodes! storm-cluster-state storm-id component-id
+                                                 executor-id out-comp)
+                     (.get-outbound-component-load storm-cluster-state znode-id callback-out-comp-load)))
+                 out-components))]
 
 
     (setup-ticks! worker executor-data)

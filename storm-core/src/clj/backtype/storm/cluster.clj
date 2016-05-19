@@ -25,7 +25,8 @@
   (:import [backtype.storm.utils Utils])
   (:import [java.security MessageDigest])
   (:import [org.apache.zookeeper.server.auth DigestAuthenticationProvider])
-  (:import [backtype.storm.nimbus NimbusInfo])
+  (:import [backtype.storm.nimbus NimbusInfo]
+           (backtype.storm.grouping OutCompLoad))
   (:use [backtype.storm util log config converter])
   (:require [backtype.storm [zookeeper :as zk]])
   (:require [backtype.storm.daemon [common :as common]]))
@@ -207,6 +208,9 @@
   (set-dynamic-batching-param! [this dynamic-batch-node-id data])
   (setup-dynamic-batching! [this storm-id component-id executor-id])
   (remove-dynamic-batching! [this storm-id component-id executor-id])
+  (get-outbound-component-load [this znode-comp-id callback])
+  (setup-outbound-comp-znodes! [this storm-id component-id executor-id out-comp-id])
+  (remove-outbound-comp-znodes! [this storm-id component-id executor-id out-comp-id])
   (activate-storm! [this storm-id storm-base])
   (update-storm! [this storm-id new-elems])
   (remove-storm-base! [this storm-id])
@@ -228,6 +232,7 @@
 (def WORKERBEATS-ROOT "workerbeats")
 (def BACKPRESSURE-ROOT "backpressure")
 (def DYNAMIC-BATCHING-ROOT "dynamic-batching")
+(def OUT_COMP-LOAD "out-comp-load")
 (def ERRORS-ROOT "errors")
 (def CODE-DISTRIBUTOR-ROOT "code-distributor")
 (def NIMBUSES-ROOT "nimbuses")
@@ -240,6 +245,7 @@
 (def WORKERBEATS-SUBTREE (str "/" WORKERBEATS-ROOT))
 (def BACKPRESSURE-SUBTREE (str "/" BACKPRESSURE-ROOT))
 (def DYNAMIC-BATCHING-SUBTREE (str "/" DYNAMIC-BATCHING-ROOT))
+(def OUT-COMP-LOAD-SUBTREE (str "/" OUT_COMP-LOAD))
 (def ERRORS-SUBTREE (str "/" ERRORS-ROOT))
 (def CODE-DISTRIBUTOR-SUBTREE (str "/" CODE-DISTRIBUTOR-ROOT))
 (def NIMBUSES-SUBTREE (str "/" NIMBUSES-ROOT))
@@ -285,15 +291,25 @@
 (defn dynamic-batching-node-id
   [storm-id comp-id executor-id field-type]
   (if (= field-type :size)
-    (str storm-id "-" comp-id "-" (first executor-id) (last executor-id) "-size")
-    (str storm-id "-" comp-id "-" (first executor-id) (last executor-id) "-interval")))
+    (str storm-id "-" comp-id "-" (first executor-id) "-size")
+    (str storm-id "-" comp-id "-" (first executor-id) "-interval")))
 
 (defn dynamic-batching-path
   [storm-id comp-id executor-id field_type]
   (str DYNAMIC-BATCHING-SUBTREE "/" (dynamic-batching-node-id storm-id comp-id executor-id field_type)))
 
+(defn out-comp-load-node-id
+  [storm-id comp-id executor-id out-comp-id]
+  (str storm-id "-" comp-id "-" (first executor-id) "-" out-comp-id))
+
+(defn out-comp-load-path
+  [storm-id comp-id executor-id out-comp-id]
+  (str OUT-COMP-LOAD-SUBTREE "/" (out-comp-load-node-id storm-id comp-id executor-id out-comp-id)))
+
 (defn error-storm-root
   [storm-id]
+
+
   (str ERRORS-SUBTREE "/" storm-id))
 
 (defn error-path
@@ -368,6 +384,7 @@
         supervisors-callback (atom nil)
         backpressure-callback (atom {})   ;; we want to reigister a topo directory getChildren callback for all workers of this dir
         dynamic-batching-callback (atom {}) ;; the call back will forward the call to workers, and then to the appropritate executor
+        outbound-comps-callback (atom {}) ;; the callback will forward the call to the worker and then to the appropriate executor
         assignments-callback (atom nil)
         storm-base-callback (atom {})
         code-distributor-callback (atom nil)
@@ -391,6 +408,7 @@
                          LOGCONFIG-ROOT (issue-map-callback! log-config-callback (first args))
                          BACKPRESSURE-ROOT (issue-map-callback! backpressure-callback (first args))
                          DYNAMIC-BATCHING-ROOT (issue-map-callback! dynamic-batching-callback (first args))
+                         OUT_COMP-LOAD (issue-map-callback! outbound-comps-callback (first args))
                          ;; this should never happen
                          (exit-process! 30 "Unknown callback for subtree " subtree args)))))]
     (doseq [p [ASSIGNMENTS-SUBTREE STORMS-SUBTREE SUPERVISORS-SUBTREE WORKERBEATS-SUBTREE ERRORS-SUBTREE CODE-DISTRIBUTOR-SUBTREE NIMBUSES-SUBTREE
@@ -576,6 +594,7 @@
           (if znode_data
             (apply str (map #(char (bit-and % 255)) znode_data)))))
 
+      ; not used. data set from external components
       (set-dynamic-batching-param!
         [this dynamic-batch-node-id data]
         (let [path (str DYNAMIC-BATCHING-SUBTREE "/" dynamic-batch-node-id)]
@@ -594,6 +613,32 @@
         "this method is called when an executor exit"
         (delete-node cluster-state (dynamic-batching-path storm-id component-id executor-id :size))
         (delete-node cluster-state (dynamic-batching-path storm-id component-id executor-id :interval)))
+
+
+      (get-outbound-component-load
+        [this znode-out-comp-id callback]
+        "this gets called from the callback function registered as the zk watch. The callback is
+        set in executor.clj"
+        (when callback
+          (swap! outbound-comps-callback assoc znode-out-comp-id callback))
+        (let [path (str OUT-COMP-LOAD-SUBTREE "/" znode-out-comp-id)
+              znode_data (get-data cluster-state path (not-nil? callback))]
+          (if znode_data
+            (Utils/javaDeserialize znode_data OutCompLoad))))
+
+      (setup-outbound-comp-znodes!
+        [this storm-id component-id executor-id out-comp-id]
+        "this method called during executor startup creates the znodes for each of the outgoing components
+         for getting the load setting"
+        (mkdirs cluster-state (out-comp-load-path storm-id component-id executor-id out-comp-id) acls)
+        (log-message "Creating out-comp load znodes for executor: " storm-id " " component-id " " executor-id " " out-comp-id))
+
+      (remove-outbound-comp-znodes!
+        [this storm-id component-id executor-id out-comp-id]
+        "method called during executor clean up"
+        (delete-node cluster-state (out-comp-load-path storm-id component-id executor-id out-comp-id)))
+
+
 
       (teardown-topology-errors!
         [this storm-id]
