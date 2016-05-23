@@ -154,7 +154,7 @@ public class StatsCollector {
                             m_mNodetoStat.get(nodeIp).AddMemUsgae((float) memUsage);
                             m_mNodetoStat.get(nodeIp).AddPowerUsage((float)powerUsage);
                         } catch (TException e) {
-                            m_oLogger.StackTraceToString(e);
+                            m_oLogger.equals(m_oLogger.StackTraceToString(e));
                             return;
                         }
                     }
@@ -214,7 +214,8 @@ public class StatsCollector {
                         try {
                             info = m_oNimbus.getTopologyInfo(id);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            m_oLogger.Error(m_oLogger.StackTraceToString(e));
+
                         }
                         long acked = 0;
                         long failed = 0;

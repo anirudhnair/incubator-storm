@@ -17,11 +17,13 @@ public class LBClient {
     private StatsCollector                  m_oCollector;
     private Logger                          m_oLogger;
     private Nimbus.Client                   m_oNimbus;
-    public int Initialize(Logger oLogger)
+    private ZookeeperClient                 m_oZK;
+    private Map                             m_mClusterConf;
+    public int Initialize(String zkHost, Logger oLogger)
     {
         m_oLogger = oLogger;
-        Map clusterConf = Utils.readStormConfig();
-        m_oNimbus = NimbusClient.getConfiguredClient(clusterConf).getClient();
+        m_mClusterConf = Utils.readStormConfig();
+        m_oNimbus = NimbusClient.getConfiguredClient(m_mClusterConf).getClient();
         // init stat collector
         m_oCollector = new StatsCollector();
         try {
@@ -32,6 +34,14 @@ public class LBClient {
 
         // start the node stat collection
         m_oCollector.StartNodeStatCollection(Common.STAT_COLLECTION_INTERVAL);
+
+        // connect to zookeeper
+        m_oZK = new ZookeeperClient(zkHost,m_oLogger);
+        if( m_oZK.Connect() == Common.FAILURE)
+        {
+            m_oLogger.Error("Exitign LB Cleint Init due to ZK connection problem");
+            return Common.FAILURE;
+        }
         return Common.SUCCESS;
     }
 
@@ -52,7 +62,11 @@ public class LBClient {
         } finally {
             kill(sTopoName);
         }
+
+        // get topoinfo from nimbus
+        LBTopologyInfo topoInfo = new LBTopologyInfo(sTopoName,m_oLogger,m_oZK);
         // do sone load balancig things here
+        // use LBTopologyInfo and StatsCollector to get great things done
         m_oLogger.Info("Topology submitted: " + sTopoName);
         return Common.SUCCESS;
     }

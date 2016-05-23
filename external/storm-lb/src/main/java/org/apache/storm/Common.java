@@ -41,6 +41,8 @@ public final class Common {
 
     public static final String NIMBUS = "172.22.68.61";
 
+    public static final String DYNAMIC_BATCHING_ROOT = "dynamic-batching";
+
     public static String GeneratePowerCommand(String sNodeIP)
     {
         // check if node is in the map
@@ -60,7 +62,14 @@ public final class Common {
 
     }
 
+    /*  (str storm-id "-" comp-id "-" (first executor-id) "-size")
+   (str storm-id "-" comp-id "-" (first executor-id) "-interval")
+   */
+    public static String DynamicBatchZnodeSize(String topoID, String compID, int execID) {
+        return topoID + "-" + compID + "-" + Integer.toString(execID) + "-size";
+    }
 
-
-
+    public static String DynamicBatchZnodeInterval(String topoID, String compID, int execID) {
+        return topoID + "-" + compID + "-" + Integer.toString(execID) + "-interval";
+    }
 }

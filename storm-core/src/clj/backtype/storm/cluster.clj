@@ -605,7 +605,11 @@
         [this storm-id component-id executor-id]
         "this method is called during the creation of each of the executor"
         (mkdirs cluster-state (dynamic-batching-path storm-id component-id executor-id :size) acls)
+        (set-data cluster-state (dynamic-batching-path storm-id component-id executor-id :size) (.getBytes "100")
+                  acls)
         (mkdirs cluster-state (dynamic-batching-path storm-id component-id executor-id :interval) acls)
+        (set-data cluster-state (dynamic-batching-path storm-id component-id executor-id :interval) (.getBytes "1")
+                  acls)
         (log-message "Creating znodes for executor: " storm-id " " component-id " " executor-id))
 
       (remove-dynamic-batching!
