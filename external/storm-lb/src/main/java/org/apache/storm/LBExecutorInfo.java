@@ -52,6 +52,13 @@ public class LBExecutorInfo {
         return Common.SUCCESS;
     }
 
+    public int setBatchSize(int size)
+    {
+        String size_path  = "/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeSize(m_sTopoID,
+                m_sCompID,m_nID);
+        return m_oZk.SetData(size_path,Integer.toString(size).getBytes());
+    }
+
     public int getID()
     {
         return m_nID;

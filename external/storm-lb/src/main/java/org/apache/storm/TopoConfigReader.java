@@ -17,7 +17,7 @@ import org.w3c.dom.Element;
 /**
  * Created by anirudhnair on 4/15/16.
  */
-public class ConfigReader {
+public class TopoConfigReader {
 
     class CompConfig
     {
@@ -36,7 +36,7 @@ public class ConfigReader {
     private String filePath;
     HashMap<String, ArrayList<CompConfig> > CompConfs;
 
-    ConfigReader(String sFilePath)
+    TopoConfigReader(String sFilePath)
     {
         this.filePath = filePath;
         CompConfs = new HashMap<>();

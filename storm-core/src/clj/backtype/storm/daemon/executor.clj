@@ -290,7 +290,7 @@
       "When receive queue is above highWaterMark"
       (if (not @(:backpressure executor-data))
         (do (reset! (:backpressure executor-data) true)
-            (log-debug "executor " (:executor-id executor-data) " is congested, set backpressure flag true")
+            (log-debug "executor " (:executor-id executor-data) " is congested, set /backpressure flag true")
             (WorkerBackpressureThread/notifyBackpressureChecker (:backpressure-trigger (:worker executor-data))))))
     (fn []
       "When receive queue is below lowWaterMark"
@@ -410,6 +410,7 @@
                                                old_batch_size (.getBatchSize (:receive-queue executor-data) )]
                                            (when-not (= new_batch_size old_batch_size)
                                              (.setBatchSize (:receive-queue executor-data) new_batch_size)
+                                             (.setBatchSize (:batch-transfer-queue executor-data) new_batch_size)
                                              (log-message "Set the batch size of " dynamic-batching-node-id " to " new_batch_size))))
 
 
@@ -419,6 +420,7 @@
                                                    old_batch_interval (.getFlushInterval (:receive-queue executor-data) )]
                                                (when-not (= new_batch_interval old_batch_interval)
                                                  (.setFlushInterval (:receive-queue executor-data) new_batch_interval)
+                                                 (.setFlushInterval (:batch-transfer-queue executor-data) new_batch_interval)
                                                  (log-message "Set the flush interval of " dynamic-batching-node-id " to " new_batch_interval))))
 
 

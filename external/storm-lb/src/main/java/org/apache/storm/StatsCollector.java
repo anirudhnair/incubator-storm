@@ -219,11 +219,13 @@ public class StatsCollector {
                         }
                         long acked = 0;
                         long failed = 0;
+                        long emitted = 0;
                         for (ExecutorSummary exec: info.get_executors()) {
                             if ("spout".equals(exec.get_component_id())) {
                                 SpoutStats stats = exec.get_stats().get_specific().get_spout();
                                 Map<String, Long> failedMap = stats.get_failed().get(":all-time");
                                 Map<String, Long> ackedMap = stats.get_acked().get(":all-time");
+                                Map<String, Long> emittedMap = exec.get_stats().get_emitted().get(":all-time");
                                 if (ackedMap != null) {
                                     for (String key: ackedMap.keySet()) {
                                         if (failedMap != null) {
@@ -234,12 +236,15 @@ public class StatsCollector {
                                         }
                                         long ackVal = ackedMap.get(key);
                                         acked += ackVal;
+                                        long emitVal = emittedMap.get(key);
+                                        emitted += emitVal;
                                     }
                                 }
                             }
                         }
                         m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
                         m_mTopotoStat.get(sTopoName).UpdateFailedCount(failed);
+                        m_mTopotoStat.get(sTopoName).UpdateEmitCount(emitted);
                     }
                     m_topo_list_lock.unlock();
 

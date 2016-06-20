@@ -25,7 +25,7 @@ public class SOL {
 
 
 
-    public StormTopology getTopology(Config config, ConfigReader reader) {
+    public StormTopology getTopology(Config config, TopoConfigReader reader) {
         final int numLevels = reader.GetLevels("SOL",BOLT_ID);
         final int spoutNum = reader.GetInstance("SOL",SPOUT_ID);
         final int boltNum = reader.GetInstance("SOL",BOLT_ID);

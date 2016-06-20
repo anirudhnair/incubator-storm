@@ -13,9 +13,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class TopologyStat {
 
-
-
-
+    // input data rate
+    private LinkedList<FieldValue<Long>>    tupleDataRateCountList;
+    private long                            totalIncomingTupleCount;
 
     //throughput
     private LinkedList<FieldValue<Long>>    tupleAckedCountList;
@@ -35,6 +35,8 @@ public class TopologyStat {
 
     public TopologyStat()
     {
+        tupleDataRateCountList  = new LinkedList<>();
+        totalIncomingTupleCount = 0;
         tupleAckedCountList     = new LinkedList<>();
         totalTupleAckedCount    = 0;
         avgLatencyList          = new LinkedList<>();
@@ -52,6 +54,15 @@ public class TopologyStat {
         long new_count = total_acked - totalTupleAckedCount;
         totalTupleAckedCount+=new_count;
         tupleAckedCountList.addLast(new FieldValue<Long>(System.currentTimeMillis(),new_count));
+        m_oLockW.unlock();
+    }
+
+    public void UpdateEmitCount(long total_emit)
+    {
+        m_oLockW.lock();
+        long new_count = total_emit - totalIncomingTupleCount;
+        totalIncomingTupleCount+=new_count;
+        tupleDataRateCountList.addLast(new FieldValue<Long>(System.currentTimeMillis(),new_count));
         m_oLockW.unlock();
     }
 
@@ -76,25 +87,28 @@ public class TopologyStat {
         m_oLockW.unlock();
     }
 
-    public long GetAvgAckCount(long milliSecRange)
+    // acks per second
+    public double GetAvgAckCount(int readings)
     {
         m_oLockR.lock();
-        long sum = 0;
+        double sum = 0.0;
         int count = 0;
-        long totalTime = 0;
-        long currTime = System.currentTimeMillis();
+        long last_time = 0, first_time = 0;
         Iterator<FieldValue<Long>> itr = tupleAckedCountList.descendingIterator();
         while(itr.hasNext())
         {
             count++;
             FieldValue<Long> tp = itr.next();
             sum+=tp.value_;
-            totalTime+=(currTime - tp.time_);
-            if(totalTime > milliSecRange) break;
+            if (count == 1) last_time = tp.time_;
+            else if(count == readings) {
+                first_time = tp.time_;
+                break;
+            }
         }
         m_oLockR.unlock();
-        if(count > 0)
-            return sum/count;
+        if (count > 0)
+            return ((double)sum/(last_time-first_time))*1000;
         else return sum;
     }
 
@@ -106,21 +120,50 @@ public class TopologyStat {
         return (FieldValue<Long>)obj;
     }
 
-    public long GetAvgLatecny_ns(long milliSecRange)
+    public double GetAvgEmitCount(int readings)
     {
         m_oLockR.lock();
-        long sum = 0;
+        double sum = 0.0;
         int count = 0;
-        long totalTime = 0;
-        long currTime = System.currentTimeMillis();
+        long last_time = 0, first_time = 0;
+        Iterator<FieldValue<Long>> itr = tupleDataRateCountList.descendingIterator();
+        while(itr.hasNext())
+        {
+            count++;
+            FieldValue<Long> tp = itr.next();
+            sum+=tp.value_;
+            if (count == 1) last_time = tp.time_;
+            else if(count == readings) {
+                first_time = tp.time_;
+                break;
+            }
+        }
+        m_oLockR.unlock();
+        if (count > 0)
+            return ((double)sum/(last_time-first_time))*1000;
+        else return sum;
+    }
+
+    public FieldValue<Long> GetEmitCountList()
+    {
+        m_oLockR.lock();
+        Object obj = tupleDataRateCountList.clone();
+        m_oLockR.unlock();
+        return (FieldValue<Long>)obj;
+    }
+
+    public double GetAvgLatecny_ns(int readings)
+    {
+        m_oLockR.lock();
+        double sum = 0;
+        int count = 0;
         Iterator<FieldValue<Long>> itr = avgLatencyList.descendingIterator();
         while(itr.hasNext())
         {
             count++;
             FieldValue<Long> lat = itr.next();
             sum+=lat.value_;
-            totalTime+=(currTime - lat.time_);
-            if(totalTime > milliSecRange) break;
+            if(count == readings) break;
         }
         m_oLockR.unlock();
         if(count > 0)
@@ -149,25 +192,27 @@ public class TopologyStat {
         return (FieldValue<Long>)obj;
     }
 
-    public long GetAvgFailedCount(long milliSecRange)
+    public double GetAvgFailedCount(int readings)
     {
         m_oLockR.lock();
-        long sum = 0;
+        double sum = 0.0;
         int count = 0;
-        long totalTime = 0;
-        long currTime = System.currentTimeMillis();
+        long last_time = 0, first_time = 0;
         Iterator<FieldValue<Long>> itr = tupleFailedCountList.descendingIterator();
         while(itr.hasNext())
         {
             count++;
             FieldValue<Long> ft = itr.next();
             sum+=ft.value_;
-            totalTime+=(currTime - ft.time_);
-            if(totalTime > milliSecRange) break;
+            if (count == 1) last_time = ft.time_;
+            else if(count == readings) {
+                first_time = ft.time_;
+                break;
+            }
         }
         m_oLockR.unlock();
-        if(count > 0)
-            return sum/count;
+        if (count > 0)
+            return ((double)sum/(last_time-first_time))*1000;
         else return sum;
     }
 

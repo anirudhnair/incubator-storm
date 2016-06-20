@@ -13,7 +13,6 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
-import org.apache.log4j.*;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -29,7 +28,7 @@ public class RollingSort {
     public static final String SPOUT_ID = "spout";
     public static final String SORT_BOLT_ID ="sort";
 
-    public StormTopology getTopology(Config config, ConfigReader reader) {
+    public StormTopology getTopology(Config config, TopoConfigReader reader) {
         final int spoutNum = reader.GetInstance("RollingSort", SPOUT_ID);
         final int boltNum =  reader.GetInstance("RollingSort", SORT_BOLT_ID);;
         final int msgSize = 100;

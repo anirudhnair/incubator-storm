@@ -1,0 +1,22 @@
+<LBConfig>
+    <LB name="DATA_RATE_AWARE">
+        <Param name="period" value="20000" />
+        <Param name="start_after" value="60000" />
+        <Param name="sla_type" value="mean" /> <!-- mean, 99, 999-->
+        <Param name="sla" value="100" />
+        <Param name="diff_threshold_inc" value="50" />
+        <Param name="diff_threshold_dec" value="49" />
+        <Param name="stat_period" value="20000" />
+    </LB>
+    <LB name="LOAD_AWARE">
+        <Param name="spout" value="4" />
+        <Param name="spout" value="4" />
+    </LB>
+    <LB name="ENERGY_AWARE">
+        <Param name="spout" value="4" />
+        <Param name="spout" value="4" />
+    </LB>
+    <LB name="STAT_COLLECTION">
+        <Param name="interval" value="10000" /><!-- 10 secs -->
+    </LB>
+</LBConfig>

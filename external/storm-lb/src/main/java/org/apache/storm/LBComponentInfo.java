@@ -16,7 +16,7 @@ public class LBComponentInfo {
     private boolean             m_bIsSpout;
     private int                 m_nTasks;
     // each component will have multiple executors
-    ArrayList<LBExecutorInfo>   m_lExecs;
+    public ArrayList<LBExecutorInfo>   m_lExecs;
     Logger                      m_oLogger;
 
     public LBComponentInfo(String compID, LBTopologyInfo topo, boolean isSpout, int nTasks, Logger logger)

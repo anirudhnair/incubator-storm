@@ -12,7 +12,6 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
-import org.apache.log4j.*;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ public class WordCount {
         return null;
     }
 
-    public StormTopology getTopology(Config config, ConfigReader reader) throws FileNotFoundException {
+    public StormTopology getTopology(Config config, TopoConfigReader reader) throws FileNotFoundException {
 
         // place holders
         final int spoutNum = reader.GetInstance("WordCount",SPOUT_ID);

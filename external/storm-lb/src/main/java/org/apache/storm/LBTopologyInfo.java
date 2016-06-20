@@ -47,7 +47,7 @@ public class LBTopologyInfo {
         ClusterSummary summary = null;
         try {
             summary = client.getClusterInfo();
-        } catch (TException e) {
+        } catch (Exception e) {
             m_oLogger.Error(m_oLogger.StackTraceToString(e));
             return Common.FAILURE;
         }

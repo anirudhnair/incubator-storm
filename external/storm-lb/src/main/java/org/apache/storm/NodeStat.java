@@ -49,10 +49,11 @@ public class NodeStat {
 
     public void AddMessageCount(long count)
     {
+        long diff = count - totalMessageCount;
         m_oLockW.lock();
-        messageCountList.addLast(new FieldValue<Long>(System.currentTimeMillis(), count));
+        messageCountList.addLast(new FieldValue<Long>(System.currentTimeMillis(), diff));
         m_oLockW.unlock();
-        totalMessageCount+=count;
+        totalMessageCount+=diff;
     }
 
     public void AddMemUsgae(float mem)
@@ -77,22 +78,30 @@ public class NodeStat {
         m_oLockW.unlock();
     }
 
-    public long GetMessageCount(long millSecRange)
+    //return message count / sec
+    public double GetAvgMessageCount(int readings)
     {
         m_oLockR.lock();
         long sum = 0;
         long totalTime = 0;
-        long currTime = System.currentTimeMillis();
+        long last_time = 0, first_time = 0;
+        int count = 0;
         Iterator<FieldValue<Long>> itr = messageCountList.descendingIterator();
         while(itr.hasNext())
         {
+            count++;
             FieldValue<Long> msgC = itr.next();
             sum+=msgC.value_;
-            totalTime+=(currTime - msgC.time_);
-            if(totalTime > millSecRange) break;
+            if (count == 1) last_time = msgC.time_;
+            else if(count == readings) {
+                first_time = msgC.time_;
+                break;
+            }
         }
         m_oLockR.unlock();
-        return sum;
+        if (count > 0)
+            return ((double)sum/(last_time-first_time))*1000;
+        else return sum; //0
     }
 
     public FieldValue<Long> GetMessageCountList()
@@ -100,24 +109,21 @@ public class NodeStat {
         return (FieldValue<Long>)messageCountList.clone();
     }
 
-    public float GetAvgMemUsage(long millSecRange) {
+    public double GetAvgMemUsage(int readings) {
         m_oLockR.lock();
-        float sum = 0f;
+        double sum = 0.0;
         int count = 0;
-        long totalTime = 0;
-        long currTime = System.currentTimeMillis();
         Iterator<FieldValue<Float>> itr = memoryUsageList.descendingIterator();
         while (itr.hasNext()) {
             count++;
             FieldValue<Float> memU = itr.next();
             sum += memU.value_;
-            totalTime += (currTime - memU.time_);
-            if (totalTime > millSecRange) break;
+            if (count == readings) break;
         }
         m_oLockR.unlock();
 
         if(count > 0)
-            return sum/(float)count;
+            return sum/count;
         else return sum;
 
     }
@@ -127,26 +133,23 @@ public class NodeStat {
         return (FieldValue<Float>)memoryUsageList.clone();
     }
 
-    public float GetAvgCPUUsage(long millSecRange)
+    public double GetAvgCPUUsage(int readings)
     {
         m_oLockR.lock();
-        float sum = 0f;
+        double sum = 0.0;
         int count = 0;
-        long totalTime = 0;
-        long currTime = System.currentTimeMillis();
         Iterator<FieldValue<Float>> itr = cpuUsageCountList.descendingIterator();
         while(itr.hasNext())
         {
             count++;
             FieldValue<Float> cpuU = itr.next();
             sum+=cpuU.value_;
-            totalTime+=(currTime - cpuU.time_);
-            if(totalTime > millSecRange) break;
+            if(count == readings) break;
         }
         m_oLockR.unlock();
 
         if(count > 0)
-            return sum/(float)count;
+            return sum/count;
         else return sum;
     }
 
@@ -156,27 +159,51 @@ public class NodeStat {
     }
 
 
-    public float GetAvgPowerUsage(long millSecRange)
+    public double GetAvgPowerUsage(int readings)
     {
         m_oLockR.lock();
-        float sum = 0f;
+        double sum = 0.0;
         int count = 0;
-        long totalTime = 0;
-        long currTime = System.currentTimeMillis();
         Iterator<FieldValue<Float>> itr = powerUsageCountList.descendingIterator();
         while(itr.hasNext())
         {
             count++;
             FieldValue<Float> powerU = itr.next();
             sum+=powerU.value_;
-            totalTime+=(currTime - powerU.time_);
-            if(totalTime > millSecRange) break;
+            if(count == readings) break;
         }
         m_oLockR.unlock();
 
         if(count > 0)
-            return sum/(float)count;
+            return sum/count;
         else return sum;
+    }
+
+    public double GetEnergyUsage(int readings)
+    {
+        m_oLockR.lock();
+        double sum = 0.0;
+        int count = 0;
+        long last_time = 0, first_time = 0;
+        Iterator<FieldValue<Float>> itr = powerUsageCountList.descendingIterator();
+        while(itr.hasNext())
+        {
+            count++;
+            FieldValue<Float> powerU = itr.next();
+            sum+=powerU.value_;
+            if (count == 1) last_time = powerU.time_;
+            else if(count == readings) {
+                first_time = powerU.time_;
+                break;
+            }
+        }
+        m_oLockR.unlock();
+        if(count > 0) {
+            double avg_power = sum/count;
+            return avg_power * (last_time - first_time);
+        }
+        else return sum;
+
     }
 
     public FieldValue<Float> GetPowerUsgaeList()

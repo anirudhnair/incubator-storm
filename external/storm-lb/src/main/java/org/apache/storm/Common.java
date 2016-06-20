@@ -11,7 +11,23 @@ public final class Common {
     public static final int SUCCESS = 0;
     public static final int FAILURE = 1;
 
-    public static enum LOAD_BALANCERS {SIMPLE, SLA_AWARE, ENERGY_AWARE, NONE};
+    public static enum LOAD_BALANCER {DATA_RATE_AWARE, LOAD_AWARE, ENERGY_AWARE, NONE};
+    public static enum SLA_TYPE {LATENCY_MEAN, LATENCY_99, LATENCY_999};
+    public static final Map<LOAD_BALANCER, String> mapLBTypeToName = Collections.unmodifiableMap(
+            new HashMap<LOAD_BALANCER, String> () {{
+                put(LOAD_BALANCER.DATA_RATE_AWARE,"DATA_RATE_AWARE");
+                put(LOAD_BALANCER.LOAD_AWARE,"LOAD_AWARE");
+                put(LOAD_BALANCER.ENERGY_AWARE,"ENERGY_AWARE");
+                put(LOAD_BALANCER.NONE,"NONE");
+            }});
+
+    public static final Map<String, SLA_TYPE> mapSLAStrToType = Collections.unmodifiableMap(
+            new HashMap<String, SLA_TYPE> () {{
+                put("mean",SLA_TYPE.LATENCY_MEAN);
+                put("99",SLA_TYPE.LATENCY_99);
+                put("999",SLA_TYPE.LATENCY_999);
+            }});
+
     public static final int STAT_PORT= 9567;
     public static final long STAT_COLLECTION_INTERVAL = 10000; // 10s
     public static final String POWER_SERVER = "tarek4234-ckt23-pdu.cs.illinois.edu";
@@ -72,4 +88,22 @@ public final class Common {
     public static String DynamicBatchZnodeInterval(String topoID, String compID, int execID) {
         return topoID + "-" + compID + "-" + Integer.toString(execID) + "-interval";
     }
+
+    public static final Map<Integer, Integer> mapInttoPower = Collections.unmodifiableMap(
+            new HashMap<Integer, Integer> () {{
+                put(0,1);
+                put(1,2);
+                put(2,4);
+                put(3,8);
+                put(4,16);
+                put(5,32);
+                put(6,64);
+                put(7,128);
+                put(8,256);
+                put(9,512);
+                put(10,1024);
+                put(11,2048);
+                }});
+
+
 }
