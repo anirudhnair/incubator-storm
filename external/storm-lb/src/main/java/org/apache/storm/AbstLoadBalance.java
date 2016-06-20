@@ -84,7 +84,7 @@ abstract public class AbstLoadBalance implements Runnable{
             all_execs.addAll(info.m_lExecs);
         for(LBExecutorInfo info: all_execs)
         {
-            if( Common.FAILURE == info.setBatchSize(batch_size)
+            if( Common.FAILURE == info.setBatchSize(batch_size))
             {
                 m_oLogger.Error("Failed to set batch_size on " + Integer.toString(info.getID()));
             }

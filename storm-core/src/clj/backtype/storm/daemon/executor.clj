@@ -290,13 +290,13 @@
       "When receive queue is above highWaterMark"
       (if (not @(:backpressure executor-data))
         (do (reset! (:backpressure executor-data) true)
-            (log-debug "executor " (:executor-id executor-data) " is congested, set /backpressure flag true")
+            (log-message "executor " (:executor-id executor-data) " is congested, set /backpressure flag true")
             (WorkerBackpressureThread/notifyBackpressureChecker (:backpressure-trigger (:worker executor-data))))))
     (fn []
       "When receive queue is below lowWaterMark"
       (if @(:backpressure executor-data)
         (do (reset! (:backpressure executor-data) false)
-            (log-debug "executor " (:executor-id executor-data) " is not-congested, set backpressure flag false")
+            (log-message "executor " (:executor-id executor-data) " is not-congested, set backpressure flag false")
             (WorkerBackpressureThread/notifyBackpressureChecker (:backpressure-trigger (:worker executor-data))))))))
 
 (defn start-batch-transfer->worker-handler! [worker executor-data]
