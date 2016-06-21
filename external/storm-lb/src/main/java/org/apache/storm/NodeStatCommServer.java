@@ -7,6 +7,8 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -67,7 +69,12 @@ public class NodeStatCommServer {
 
     public static void main( String[] args )
     {
-        String sIP = args[0];
+        String sIP = null;
+        try {
+            sIP  = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e1) {
+            System.out.print("Unknown Host Exception");
+        }
         // start the service and wait for it
         NodeStatCommServer server = new NodeStatCommServer();
         Logger logger = new Logger();

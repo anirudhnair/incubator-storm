@@ -37,6 +37,7 @@ public class LBClient {
             m_oCollector.Initialize(m_oNimbus,m_oLogger);
         } catch (Exception e) {
             m_oLogger.Error(m_oLogger.StackTraceToString(e));
+            return Common.FAILURE;
         }
 
         // start the node stat collection
@@ -97,7 +98,6 @@ public class LBClient {
             lb_thread.start();
             m_oLogger.Info("Loadbalancer successfully started");
         }
-        // do sone load balancig things here
 
         return Common.SUCCESS;
     }
@@ -123,4 +123,6 @@ public class LBClient {
         TopologyStat topoStat = m_oCollector.GetTopoStat(sTopoName);
         return topoStat;
     }
+
+
 }

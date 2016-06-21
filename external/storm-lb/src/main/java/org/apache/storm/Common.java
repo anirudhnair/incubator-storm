@@ -28,6 +28,13 @@ public final class Common {
                 put("999",SLA_TYPE.LATENCY_999);
             }});
 
+    public static final Map<SLA_TYPE,String > mapSLATypeToStr = Collections.unmodifiableMap(
+            new HashMap<SLA_TYPE,String> () {{
+                put(SLA_TYPE.LATENCY_MEAN,"mean");
+                put(SLA_TYPE.LATENCY_99,"99");
+                put(SLA_TYPE.LATENCY_999,"999");
+            }});
+
     public static final int STAT_PORT= 9567;
     public static final long STAT_COLLECTION_INTERVAL = 10000; // 10s
     public static final String POWER_SERVER = "tarek4234-ckt23-pdu.cs.illinois.edu";

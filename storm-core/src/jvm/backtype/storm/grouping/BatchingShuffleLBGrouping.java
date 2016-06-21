@@ -2,6 +2,8 @@ package backtype.storm.grouping;
 
 import backtype.storm.generated.GlobalStreamId;
 import backtype.storm.task.WorkerTopologyContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
@@ -11,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Created by anirudhnair on 2/15/16.
  */
 public class BatchingShuffleLBGrouping implements CustomStreamGrouping, Serializable {
-
+    public static final Logger LOG = LoggerFactory.getLogger(BatchingShuffleLBGrouping.class);
     private final AtomicReference<Map<Integer,Double>> _probability = new AtomicReference<Map<Integer,Double>>(new HashMap<Integer,Double>());
     private Random random;
     private List<Integer>[] rets; //return value of the chooseTasks requires a list

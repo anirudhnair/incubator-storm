@@ -1,10 +1,13 @@
 package backtype.storm.grouping;
 
 import backtype.storm.generated.GlobalStreamId;
+import backtype.storm.messaging.TransportFactory;
 import backtype.storm.task.WorkerTopologyContext;
 import backtype.storm.tuple.Fields;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
@@ -15,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Created by anirudhnair on 5/19/16.
  */
 public class AdaptiveKeyGrouping implements CustomStreamGrouping, Serializable {
-
+    public static final Logger LOG = LoggerFactory.getLogger(AdaptiveKeyGrouping.class);
     private static final long serialVersionUID = -447379837314000353L;
     private List<Integer> targetTasks;
     private HashFunction h1 = Hashing.murmur3_128(13);

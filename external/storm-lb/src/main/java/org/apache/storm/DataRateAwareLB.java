@@ -35,9 +35,10 @@ public class DataRateAwareLB extends AbstLoadBalance {
         int curr_batch_size = 1;
         int curr_update_value = 0;
         int nStatReadings = (int)(m_nStatPeriod/m_nStatCollectionInterval);
+        long iter = 0;
         while(true)
         {
-
+            iter++;
             double acked_rate = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgAckCount(nStatReadings); // last 20 secs
             double data_rate = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgEmitCount(nStatReadings);
 
@@ -48,6 +49,7 @@ public class DataRateAwareLB extends AbstLoadBalance {
                     curr_update_value++;
                     curr_batch_size+= Common.mapInttoPower.get(curr_update_value);
                     update_bacth_size_all(curr_batch_size);
+
                 } else // either none or dec action
                 {
                     curr_update_value = 0;
@@ -77,7 +79,11 @@ public class DataRateAwareLB extends AbstLoadBalance {
             {
                 prev_batch_action = BATCH_ACTION.NONE;
             }
-
+            m_oLogger.Info(" Iter:" + Long.toString(iter) +
+                    "BATCH ACTION:" + mapBatchActionToString.get(prev_batch_action) +
+                    "UPDATE VALUE:" + Long.toString(curr_update_value) +
+                    "BATCH SIZE:" + Long.toString(curr_batch_size)
+            );
             try {
                 Thread.sleep(m_nLBPeriod);
             } catch (InterruptedException e) {

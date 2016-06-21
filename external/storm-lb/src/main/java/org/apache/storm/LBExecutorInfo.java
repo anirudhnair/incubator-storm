@@ -32,8 +32,17 @@ public class LBExecutorInfo {
         m_sTopoID = m_oTopoInfo.getTopoID();
         m_sCompID = m_oComp.getCompID();
         m_oLogger = oLogger;
+        m_oLogger.Info("Creating LBExecutorInfo " + PrintExectorInfo());
     }
 
+    public String PrintExectorInfo()
+    {
+        String sStr = " Topo ID:" + m_sTopoID +
+                " Comp ID:" + m_sCompID +
+                " Executor ID:" + Integer.toString(m_nID) +
+                " Host:" + m_sHost;
+        return sStr;
+    }
 
     public int UpdateQueueParmas()
     {
@@ -56,6 +65,7 @@ public class LBExecutorInfo {
     {
         String size_path  = "/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeSize(m_sTopoID,
                 m_sCompID,m_nID);
+        m_oLogger.Info("Setting batch size " + PrintExectorInfo() + " batch_size:" + Integer.toString(size));
         return m_oZk.SetData(size_path,Integer.toString(size).getBytes());
     }
 

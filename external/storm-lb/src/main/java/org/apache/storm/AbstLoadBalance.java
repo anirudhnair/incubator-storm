@@ -4,6 +4,9 @@ import backtype.storm.generated.Nimbus;
 import org.HdrHistogram.Histogram;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by anirudhnair on 6/14/16.
@@ -26,6 +29,21 @@ abstract public class AbstLoadBalance implements Runnable{
     protected Common.SLA_TYPE                  m_oSLAType;
 
     public static enum BATCH_ACTION {INC, DEC, NONE};
+    public static final Map<BATCH_ACTION, String> mapBatchActionToString = Collections.unmodifiableMap(
+            new HashMap<BATCH_ACTION, String>() {{
+                put(BATCH_ACTION.DEC,"Decrement");
+                put(BATCH_ACTION.INC,"Increment");
+                put(BATCH_ACTION.NONE, "None");
+            }});
+
+    public static final Map<String, BATCH_ACTION> mapStringToBatchAction = Collections.unmodifiableMap(
+            new HashMap<String, BATCH_ACTION>() {{
+                put("Decrement", BATCH_ACTION.DEC);
+                put("Increment",BATCH_ACTION.INC);
+                put("None", BATCH_ACTION.NONE);
+            }});
+
+
 
     public int Initialize(Common.LOAD_BALANCER type, String sTopoName,StatsCollector oCollect, ZookeeperClient
             zk_client,
@@ -51,8 +69,13 @@ abstract public class AbstLoadBalance implements Runnable{
 
     public String PrintParams()
     {
-        String sParams = " Period:" + Long.toString(m_nLBPeriod) +
-                         " StartAfter:" + Long.toString(m_nStartAfter);
+        String sParams = " Topology:" + m_sTopoName +
+                " Period:" + Long.toString(m_nLBPeriod) +
+                " StartAfter:" + Long.toString(m_nStartAfter) +
+                " SLA:" + Long.toString(m_nSLA) +
+                " Stats Period:" + Integer.toString(m_nStatPeriod) +
+                " SLA Type:" + Common.mapSLATypeToStr.get(m_oSLAType);
+
         return sParams;
 
     }
@@ -72,8 +95,17 @@ abstract public class AbstLoadBalance implements Runnable{
                 latency_value_ms = (long) (hist_.getMean()/1000000);
                 break;
         }
-        if(latency_value_ms > m_nSLA) return false;
-        else return true;
+
+        if(latency_value_ms > m_nSLA) {
+            m_oLogger.Info("SLA Satisfaction Test: False " + Long.toString(latency_value_ms) + " > " + Long.toString
+                    (m_nSLA));
+            return false;
+        }
+        else {
+            m_oLogger.Info("SLA Satisfaction Test: True " + Long.toString(latency_value_ms) + " <= " + Long.toString
+                    (m_nSLA));
+            return true;
+        }
     }
 
     public int update_bacth_size_all(int batch_size)

@@ -89,6 +89,7 @@ public class StatsCollector {
 
     private void GetNodeStatFromTopologyInfo() throws Exception
     {
+        m_oLogger.Info("Get Node stats from topology information");
         Map<String,Long> iptoMsgCount = new HashMap<>();
         for(String nodeIp: m_lNodes)
         {
@@ -127,6 +128,7 @@ public class StatsCollector {
         for (Map.Entry<String, Long> entry : iptoMsgCount.entrySet()) {
             String key = entry.getKey();
             Long value = entry.getValue();
+            m_oLogger.Info("Node Stat: Node-" + key + " Msg Count:" + value.toString());
             m_mNodetoStat.get(key).AddMessageCount(value);
         }
 
@@ -152,7 +154,9 @@ public class StatsCollector {
                             double powerUsage = m_mNodetoStatClient.get(nodeIp).PowerUsgae();
                             m_mNodetoStat.get(nodeIp).AddCPUUsage((float) cpuUsage);
                             m_mNodetoStat.get(nodeIp).AddMemUsgae((float) memUsage);
-                            m_mNodetoStat.get(nodeIp).AddPowerUsage((float)powerUsage);
+                            m_mNodetoStat.get(nodeIp).AddPowerUsage((float) powerUsage);
+                            m_oLogger.Info("Node Stat: Node-" + nodeIp + " CPU-" + Double.toString(cpuUsage) +
+                                    " Mem-" + Double.toString(memUsage) + " Power-" + Double.toString(powerUsage));
                         } catch (TException e) {
                             m_oLogger.equals(m_oLogger.StackTraceToString(e));
                             return;
@@ -245,6 +249,8 @@ public class StatsCollector {
                         m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
                         m_mTopotoStat.get(sTopoName).UpdateFailedCount(failed);
                         m_mTopotoStat.get(sTopoName).UpdateEmitCount(emitted);
+                        m_oLogger.Info("Topology Stat: Node-" + sTopoName + " Acked-" + Long.toString(acked) +
+                                " Failed-" + Long.toString(failed) + " Emitted-" + Long.toString(emitted));
                     }
                     m_topo_list_lock.unlock();
 
@@ -262,6 +268,7 @@ public class StatsCollector {
      */
     public int AddTopologyToStatCollection(String topo_name, Config conf) {
         m_topo_list_lock.lock();
+        m_oLogger.Info("Adding " + topo_name + " to stats collection list");
         m_lTopologyNames.add(topo_name);
         // create topostat
         TopologyStat stat = new TopologyStat();
@@ -273,6 +280,7 @@ public class StatsCollector {
         String url = server.getUrl();
         conf.registerMetricsConsumer(backtype.storm.metric.LoggingMetricsConsumer.class);
         conf.registerMetricsConsumer(backtype.storm.metric.HttpForwardingMetricsConsumer.class, url, 1);
+        m_oLogger.Info("Created http server to receive stats from the topology");
         m_topo_list_lock.unlock();
         return Common.SUCCESS;
     };
