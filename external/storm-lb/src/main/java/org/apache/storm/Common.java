@@ -10,7 +10,7 @@ import java.util.Map;
 public final class Common {
     public static final int SUCCESS = 0;
     public static final int FAILURE = 1;
-
+    public static final int DATA_RATE_CHANGE_INTERVAL = 10000;//10 secs
     public static enum LOAD_BALANCER {DATA_RATE_AWARE, LOAD_AWARE, ENERGY_AWARE, NONE};
     public static enum SLA_TYPE {LATENCY_MEAN, LATENCY_99, LATENCY_999};
     public static final Map<LOAD_BALANCER, String> mapLBTypeToName = Collections.unmodifiableMap(

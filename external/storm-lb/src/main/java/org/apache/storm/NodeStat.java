@@ -210,4 +210,25 @@ public class NodeStat {
     {
         return (FieldValue<Float>)powerUsageCountList.clone();
     }
+
+    public String PrintStatus()
+    {
+        String status =
+                " Message Count 10 readings" + Double.toString(GetAvgMessageCount(10)) +
+                        " Message Count 20 readings" +  Double.toString(GetAvgMessageCount(20))   +
+                        " Message Count 100 readings" +  Double.toString(GetAvgMessageCount(100))   +
+                        " CPU Util 10 readings" +  Double.toString(GetAvgCPUUsage(10))   +
+                        " CPU Util 20 readings" +  Double.toString(GetAvgCPUUsage(20))   +
+                        " CPU Util 100 readings" + Double.toString(GetAvgCPUUsage(100))    +
+                        " Mem Usage 10 readings" +  Double.toString(GetAvgMemUsage(10))   +
+                        " Mem Usage 20 readings" +  Double.toString(GetAvgMemUsage(20))   +
+                        " Mem Usage 100 readings" +  Double.toString(GetAvgMemUsage(100))   +
+                        " Power 10 readings" +  Double.toString(GetAvgPowerUsage(10))   +
+                        " Power 20 readings" +   Double.toString(GetAvgPowerUsage(20))  +
+                        " Power 100 readings" +  Double.toString(GetAvgPowerUsage(100));
+
+        return status;
+
+
+    }
 }

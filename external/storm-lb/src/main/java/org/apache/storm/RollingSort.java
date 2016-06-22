@@ -13,30 +13,48 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import org.apache.storm.metrics.hdrhistogram.HistogramMetric;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created by anirudhnair on 3/8/16.
  */
-public class RollingSort {
+public class RollingSort implements ILBTopoIface{
+
+    private static class Cookie {
+        public final long time;
+
+        Cookie(long time) {
+            this.time = time;
+        }
+    }
 
     public static final String SPOUT_ID = "spout";
     public static final String SORT_BOLT_ID ="sort";
 
-    public StormTopology getTopology(Config config, TopoConfigReader reader) {
-        final int spoutNum = reader.GetInstance("RollingSort", SPOUT_ID);
-        final int boltNum =  reader.GetInstance("RollingSort", SORT_BOLT_ID);;
-        final int msgSize = 100;
+    public StormTopology getTopology(Config config) throws IOException {
+
+        TopoConfigReader   oTopoConfig = new TopoConfigReader("/home/ajayaku2/conf/topo_config.xml");
+        oTopoConfig.Init();
+        LBConfigReader     oLBConfig = new LBConfigReader("/home/ajayaku2/conf/lb_config.xml");
+        oLBConfig.Init();
+        final int spoutNum = oTopoConfig.GetInstance("RollingSort", SPOUT_ID);
+        final int boltNum =  oTopoConfig.GetInstance("RollingSort", SORT_BOLT_ID);
+        final int msgSize = oTopoConfig.GetInstance("RollingSort", "msg_size");
         final int chunkSize = 100;
-        final int emitFreq = 100;
+        final int emitFreq = oTopoConfig.GetInstance("RollingSort", "emit_freq");
+        final long statCollectionInterval = Long.parseLong(oLBConfig.GetValue("STAT_COLLECTION","interval"));
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout(SPOUT_ID, new RandomMessageSpout(), spoutNum);
+        builder.setSpout(SPOUT_ID, new RandomMessageSpout(msgSize,statCollectionInterval), spoutNum);
         builder.setBolt(SORT_BOLT_ID, new SortBolt(emitFreq, chunkSize), boltNum).shuffleGrouping(SPOUT_ID);
+
+        config.setNumWorkers(oTopoConfig.GetInstance("RollingSort", "workers"));
+
         return builder.createTopology();
     }
 
@@ -45,19 +63,56 @@ public class RollingSort {
 
         private static final long serialVersionUID = -4100642374496292646L;
         public static final String FIELDS = "message";
-        public static final String MESSAGE_SIZE = "message.size";
         public static final int DEFAULT_MESSAGE_SIZE = 100;
-
-        private final int sizeInBytes = DEFAULT_MESSAGE_SIZE;
+        private int sizeInBytes = DEFAULT_MESSAGE_SIZE;
         private long messageCount = 0;
         private SpoutOutputCollector collector;
         private String [] messages = null;
         private final boolean ackEnabled = true;
         private Random rand = null;
+        private long stat_interval;
+        private long start_time;
+        private int rate_index = 1;
+        private int [] data_rates;
+
+        // variable to control data rate
+        long _periodNano;
+        long _emitAmount;
+        Random _rand;
+        long _nextEmitTime;
+        long _emitsLeft;
+
+        HistogramMetric _histo;
+
+        public RandomMessageSpout(int msg_size, long statIntervalms) throws IOException {
+            stat_interval = statIntervalms;
+            sizeInBytes = msg_size;
+            BufferedReader in = new BufferedReader(new java.io.FileReader("/home/ajayaku2/conf/data_rates.txt"));
+            String str;
+            data_rates = new int[720];
+            int count = 0;
+            while((str = in.readLine()) != null){
+                data_rates[count] = Integer.parseInt(str);
+                count++;
+            }
+
+            int ratePerSecond = data_rates[0];
+            if (ratePerSecond > 0) {
+                _periodNano = Math.max(1, 1000000000/ratePerSecond);
+                _emitAmount = Math.max(1, (long)((ratePerSecond / 1000000000.0) * _periodNano));
+            } else {
+                _periodNano = Long.MAX_VALUE - 1;
+                _emitAmount = 1;
+            }
+
+        }
 
         public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
             this.rand = new Random();
             this.collector = collector;
+            start_time = System.nanoTime();
+            _nextEmitTime = System.nanoTime();
+            _emitsLeft = _emitAmount;
             final int differentMessages = 100;
             this.messages = new String[differentMessages];
             for(int i = 0; i < differentMessages; i++) {
@@ -67,19 +122,52 @@ public class RollingSort {
                 }
                 messages[i] = sb.toString();
             }
+            _histo = new HistogramMetric(3600000000000L, 3);
+            context.registerMetric("comp-lat-histo", _histo, (int) stat_interval/1000);
+
+            // read the data rates
+
         }
 
         @Override
         public void nextTuple() {
-            final String message = messages[rand.nextInt(messages.length)];
-            if(ackEnabled) {
-                collector.emit(new Values(message), messageCount);
-                messageCount++;
-            } else {
-                collector.emit(new Values(message));
+
+            if (_emitsLeft <= 0 && _nextEmitTime <= System.nanoTime()) {
+                _emitsLeft = _emitAmount;
+                _nextEmitTime = _nextEmitTime + _periodNano;
             }
+
+            if (_emitsLeft > 0) {
+                String message = messages[rand.nextInt(messages.length)];
+                collector.emit(new Values(message), new Cookie(System.nanoTime()));
+                _emitsLeft--;
+            }
+
+            if(((System.nanoTime() - start_time) / 1000000) > (rate_index * Common.DATA_RATE_CHANGE_INTERVAL ))
+            {
+                int ratePerSecond = data_rates[rate_index];
+                if (ratePerSecond > 0) {
+                    _periodNano = Math.max(1, 1000000000/ratePerSecond);
+                    _emitAmount = Math.max(1, (long)((ratePerSecond / 1000000000.0) * _periodNano));
+                }
+                rate_index++;
+            }
+
         }
 
+        @Override
+        public void ack(Object id) {
+            long end = System.nanoTime();
+            Cookie st = (Cookie)id;
+            _histo.recordValue(end-st.time);
+        }
+
+        @Override
+        public void fail(Object id) {
+            Cookie st = (Cookie)id;
+            // not replaying messages
+            //_collector.emit(new Values(st.sentence), id);
+        }
         @Override
         public void declareOutputFields(OutputFieldsDeclarer declarer) {
             declarer.declare(new Fields(FIELDS));
@@ -88,10 +176,6 @@ public class RollingSort {
 
     public static class SortBolt extends BaseBasicBolt {
 
-        public static final String EMIT_FREQ = "emit.frequency";
-        public static final int DEFAULT_EMIT_FREQ = 60;  // 60s
-        public static final String CHUNK_SIZE = "chunk.size";
-        public static final int DEFAULT_CHUNK_SIZE = 100;
         public static final String FIELDS = "sorted_data";
 
         private final int emitFrequencyInSeconds;

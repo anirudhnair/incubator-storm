@@ -7,7 +7,10 @@ import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.utils.NimbusClient;
 import backtype.storm.utils.Utils;
 
+import java.util.List;
 import java.util.Map;
+
+import static backtype.storm.Config.STORM_ZOOKEEPER_SERVERS;
 
 /**
  * Created by anirudhnair on 3/4/16.
@@ -22,11 +25,12 @@ public class LBClient {
     private TopoConfigReader                m_oTopoConfig;
     private LBConfigReader                  m_oLBConfig;
 
-    public int Initialize(String zkHost, Logger oLogger)
+    public int Initialize(Logger oLogger)
     {
         m_oLogger = oLogger;
         m_mClusterConf = Utils.readStormConfig();
         m_oNimbus = NimbusClient.getConfiguredClient(m_mClusterConf).getClient();
+        String zkHost = ((List<String>) m_mClusterConf.get(STORM_ZOOKEEPER_SERVERS)).get(0);
         m_oTopoConfig = new TopoConfigReader("/home/ajayaku2/conf/topo_config.xml");
         m_oTopoConfig.Init();
         m_oLBConfig = new LBConfigReader("/home/ajayaku2/conf/lb_config.xml");
@@ -62,6 +66,10 @@ public class LBClient {
     public int SubmitTopology(String sTopoName, Config conf, StormTopology topology, Common.LOAD_BALANCER lb) throws Exception
     {
         m_oLogger.Info("New topology submission in progress: " + sTopoName);
+        conf.put(Config.TOPOLOGY_WORKER_GC_CHILDOPTS,
+                "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:NewSize=128m -XX:CMSInitiatingOccupancyFraction=70 -XX:-CMSConcurrentMTEnabled");
+        conf.put(Config.TOPOLOGY_WORKER_CHILDOPTS, "-Xmx2g");
+
         m_oCollector.AddTopologyToStatCollection(sTopoName, conf);
         try {
             StormSubmitter.submitTopology(sTopoName, conf, topology);

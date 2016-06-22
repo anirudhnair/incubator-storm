@@ -2,6 +2,9 @@
     <Topology name="RollingSort">
         <Component name="spout" instances="4" />
         <Component name="sort" instances="4" />
+        <Component name="workers" instances="100" />
+        <Component name="msg_size" instances="100" />
+        <Component name="emit_freq" instances="100" />
     </Topology>
     <Topology name="SOL">
         <Component name="spout" instances="4" />
