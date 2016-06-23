@@ -1,5 +1,7 @@
 package org.apache.storm;
 
+import org.apache.storm.Logger;
+import org.apache.storm.NodeStatClient;
 import org.apache.thrift.TException;
 
 import java.net.InetAddress;

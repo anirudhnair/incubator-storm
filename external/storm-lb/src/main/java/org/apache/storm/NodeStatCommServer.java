@@ -79,7 +79,7 @@ public class NodeStatCommServer {
         NodeStatCommServer server = new NodeStatCommServer();
         Logger logger = new Logger();
         String timeStamp = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
-        logger.Initialize("statserver.log." + timeStamp);
+        logger.Initialize("/home/ajayaku2/log/statserver_" + timeStamp + "_" + sIP + ".log");
         server.Init(sIP,logger);
         server.Start();
         server.Wait();
