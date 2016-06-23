@@ -27,6 +27,6 @@ public class NodeStatServerTest {
             System.out.println("-----------------");
             Thread.sleep(10000);
         }
-        System.exit(Common.SUCCESS);
+        System.exit(0);
     }
 }
