@@ -61,17 +61,21 @@ public class NodeStatServerImpl implements NodeStatServer.Iface {
             //execute command
             try {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash","-c",cmd});
+                Thread.sleep(500);
             // read from file
                 FileInputStream fstream = new FileInputStream(outFile);
                 DataInputStream in = new DataInputStream(fstream);
                 BufferedReader br = new BufferedReader(new InputStreamReader(in));
                 String strLine;
                 strLine = br.readLine();
+                strLine.replaceAll("\\s+","");
                 int power = Integer.parseInt(strLine);
                 return (double)power/10.0;
             } catch (IOException e) {
                 e.printStackTrace();
                 return 0.0;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
             // return
