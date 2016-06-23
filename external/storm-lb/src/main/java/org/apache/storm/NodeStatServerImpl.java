@@ -68,7 +68,7 @@ public class NodeStatServerImpl implements NodeStatServer.Iface {
                 BufferedReader br = new BufferedReader(new InputStreamReader(in));
                 String strLine;
                 strLine = br.readLine();
-                strLine.replaceAll("\\s+","");
+                strLine = strLine.replaceAll("\\s+","");
                 int power = Integer.parseInt(strLine);
                 return (double)power/10.0;
             } catch (IOException e) {
@@ -76,6 +76,7 @@ public class NodeStatServerImpl implements NodeStatServer.Iface {
                 return 0.0;
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                return 0.0;
             }
 
             // return
