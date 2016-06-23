@@ -7,12 +7,14 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+import static java.lang.System.exit;
+
 /**
  * Created by anirudhnair on 6/23/16.
  */
 public class NodeStatServerTest {
 
-    public static void main( String[] args ) throws InterruptedException, TException {
+    public static void main(String[] args) throws InterruptedException, TException {
         String sIP = args[0];
         Logger logger = new Logger();
         String timestamp = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
@@ -27,6 +29,6 @@ public class NodeStatServerTest {
             System.out.println("-----------------");
             Thread.sleep(10000);
         }
-        System.exit(0);
+
     }
 }
