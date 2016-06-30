@@ -143,6 +143,10 @@
   [^WorkerTopologyContext worker-context component-id]
   (clojurify-structure (.getOutComponentStream worker-context component-id)))
 
+(defn hash-map-custom-create [map-data]
+  (if (seq map-data)
+    (HashMap. map-data)))
+
 (defn custom-outbound-grouper
   [^WorkerTopologyContext worker-context component-id]
   (->> (.getTargets worker-context component-id)
@@ -153,8 +157,9 @@
                        [component (Utils/javaDeserialize (.get_custom_serialized thrift-grouping) Serializable)]))
                      component->grouping)
                     (into {}))))
-       (merge)
-       (HashMap.)))
+       (apply merge)
+       (hash-map-custom-create)))
+
 
 (defn executor-type [^WorkerTopologyContext context component-id]
   (let [topology (.getRawTopology context)
@@ -444,6 +449,8 @@
             (.setup-dynamic-batching! (:storm-cluster-state executor-data) storm-id component-id executor-id)
             ;; register dynamic batching callbacks
             (.get-dynamic-batching-param storm-cluster-state znode-id-interval callback-dynamic-batching-interval)
+            (.get-dynamic-batching-param storm-cluster-state znode-id-size callback-dynamic-batching-size)
+
             (map (fn [out-comp]
                    (let [znode-id (cluster/out-comp-load-node-id storm-id component-id executor-id out-comp) ]
                      (.setup-outbound-comp-znodes! storm-cluster-state storm-id component-id

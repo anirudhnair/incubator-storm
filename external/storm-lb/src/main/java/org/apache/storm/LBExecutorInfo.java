@@ -26,8 +26,8 @@ public class LBExecutorInfo {
         m_oZk   = zk;
         m_sHost = host;
         m_nID   = id;
-        m_nBatchSize = 100;
-        m_nInterval = 1;
+        m_nBatchSize = 1;
+        m_nInterval = 1000;
         m_oTopoInfo = m_oComp.getTopoInfo();
         m_sTopoID = m_oTopoInfo.getTopoID();
         m_sCompID = m_oComp.getCompID();
@@ -46,9 +46,9 @@ public class LBExecutorInfo {
 
     public int UpdateQueueParmas()
     {
-        String size_path  = "/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeSize(m_sTopoID,
+        String size_path  = "/storm/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeSize(m_sTopoID,
                 m_sCompID,m_nID);
-        String interval_path = "/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeInterval(m_sTopoID,
+        String interval_path = "/storm/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeInterval(m_sTopoID,
                 m_sCompID, m_nID);
         try {
             m_nBatchSize = Integer.parseInt(new String(m_oZk.GetData(size_path), "UTF-8"));
@@ -63,7 +63,7 @@ public class LBExecutorInfo {
 
     public int setBatchSize(int size)
     {
-        String size_path  = "/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeSize(m_sTopoID,
+        String size_path  = "/storm/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeSize(m_sTopoID,
                 m_sCompID,m_nID);
         m_oLogger.Info("Setting batch size " + PrintExectorInfo() + " batch_size:" + Integer.toString(size));
         return m_oZk.SetData(size_path,Integer.toString(size).getBytes());

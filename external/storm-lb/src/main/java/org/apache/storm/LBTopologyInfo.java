@@ -52,7 +52,7 @@ public class LBTopologyInfo {
             return Common.FAILURE;
         }
 
-        String id = null;
+
         for (TopologySummary ts: summary.get_topologies()) {
             if (m_sTopoName.equals(ts.get_name())) {
                 m_sTopoID = ts.get_id();
@@ -67,7 +67,7 @@ public class LBTopologyInfo {
 
 
         try {
-            m_oTopoInfoStorm = client.getTopologyInfo(id);
+            m_oTopoInfoStorm = client.getTopologyInfo(m_sTopoID);
         } catch (Exception e) {
             m_oLogger.Error(m_oLogger.StackTraceToString(e));
             return Common.FAILURE;
