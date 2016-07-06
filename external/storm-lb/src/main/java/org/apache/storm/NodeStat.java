@@ -214,18 +214,18 @@ public class NodeStat {
     public String PrintStatus()
     {
         String status =
-                " Message Count 10 readings" + Double.toString(GetAvgMessageCount(10)) +
-                        " Message Count 20 readings" +  Double.toString(GetAvgMessageCount(20))   +
-                        " Message Count 100 readings" +  Double.toString(GetAvgMessageCount(100))   +
-                        " CPU Util 10 readings" +  Double.toString(GetAvgCPUUsage(10))   +
-                        " CPU Util 20 readings" +  Double.toString(GetAvgCPUUsage(20))   +
-                        " CPU Util 100 readings" + Double.toString(GetAvgCPUUsage(100))    +
-                        " Mem Usage 10 readings" +  Double.toString(GetAvgMemUsage(10))   +
-                        " Mem Usage 20 readings" +  Double.toString(GetAvgMemUsage(20))   +
-                        " Mem Usage 100 readings" +  Double.toString(GetAvgMemUsage(100))   +
-                        " Power 10 readings" +  Double.toString(GetAvgPowerUsage(10))   +
-                        " Power 20 readings" +   Double.toString(GetAvgPowerUsage(20))  +
-                        " Power 100 readings" +  Double.toString(GetAvgPowerUsage(100));
+                " Message Count 10 readings " + Double.toString(GetAvgMessageCount(10)) + "\n" +
+                        " Message Count 20 readings " +  Double.toString(GetAvgMessageCount(20))   + "\n" +
+                        " Message Count 100 readings " +  Double.toString(GetAvgMessageCount(100))   + "\n" +
+                        " CPU Util 10 readings " +  Double.toString(GetAvgCPUUsage(10))   + "\n" +
+                        " CPU Util 20 readings " +  Double.toString(GetAvgCPUUsage(20))   + "\n" +
+                        " CPU Util 100 readings " + Double.toString(GetAvgCPUUsage(100))    + "\n" +
+                        " Mem Usage 10 readings " +  Double.toString(GetAvgMemUsage(10))   + "\n" +
+                        " Mem Usage 20 readings " +  Double.toString(GetAvgMemUsage(20))   + "\n" +
+                        " Mem Usage 100 readings " +  Double.toString(GetAvgMemUsage(100))   + "\n" +
+                        " Power 10 readings " +  Double.toString(GetAvgPowerUsage(10))   + "\n" +
+                        " Power 20 readings " +   Double.toString(GetAvgPowerUsage(20))  + "\n" +
+                        " Power 100 readings " +  Double.toString(GetAvgPowerUsage(100)) + "\n";
 
         return status;
 

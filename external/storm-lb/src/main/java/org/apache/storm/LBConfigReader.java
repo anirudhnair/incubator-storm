@@ -26,7 +26,7 @@ public class LBConfigReader {
 
     LBConfigReader(String sFilePath)
     {
-        this.filePath = filePath;
+        this.filePath = sFilePath;
         lbConfs = new HashMap<>();
     }
 
@@ -57,6 +57,7 @@ public class LBConfigReader {
         for (int temp = 0; temp < nList.getLength(); temp++) {
             Node nNode = nList.item(temp);
             // get the name
+            if(nNode.getNodeType() == Node.ELEMENT_NODE) {
             Element eElement = (Element) nNode;
             String lbName = eElement.getAttribute("name");
             lbConfs.put(lbName,new HashMap<String,String>());
@@ -65,12 +66,13 @@ public class LBConfigReader {
             // get children and fill in lb config
             for (int child = 0; child < comps.getLength(); ++child) {
                 Node nChild = comps.item(child);
+                if(nChild.getNodeType() == Node.ELEMENT_NODE) {
                 Element eComp = (Element) nChild;
                 String name = eComp.getAttribute("name");
                 String value = eComp.getAttribute("value");
                 lbConfs.get(lbName).put(name,value);
-            }
-        }
+            }}
+        }}
         return Common.SUCCESS;
     }
 

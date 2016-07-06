@@ -219,21 +219,21 @@ public class TopologyStat {
     public String PrintStatus()
     {
         String status =
-                " Throughput 10 readings" + Double.toString(GetAvgAckCount(10)) +
-                " Throughput 20 readings" +  Double.toString(GetAvgAckCount(20))   +
-                " Throughput 100 readings" +  Double.toString(GetAvgAckCount(100))   +
-                " Data Rate 10 readings" +  Double.toString(GetAvgEmitCount(10))   +
-                " Data Rate 20 readings" +  Double.toString(GetAvgEmitCount(20))   +
-                " Data Rate 100 readings" + Double.toString(GetAvgEmitCount(100))    +
-                " Latency Mean " +   Double.toString(hist_latecny.getMean())  +
-                " Latency 10 readings" +  Double.toString(GetAvgLatecny_ns(10))   +
-                " Latency 20 readings" +  Double.toString(GetAvgLatecny_ns(20))   +
-                " Latency 100 readings" +  Double.toString(GetAvgLatecny_ns(100))   +
-                " Latency 99" + Double.toString(hist_latecny.getValueAtPercentile(99.0))  +
-                " Latency 99.9" + Double.toString(hist_latecny.getValueAtPercentile(99.9))  +
-                " Failed 10 readings" +  Double.toString(GetAvgFailedCount(10))   +
-                " Failed 20 readings" +   Double.toString(GetAvgFailedCount(20))  +
-                " Failed 100 readings" +  Double.toString(GetAvgFailedCount(100));
+                " Throughput 10 readings " + Double.toString(GetAvgAckCount(10)) + "\n" +
+                " Throughput 20 readings " +  Double.toString(GetAvgAckCount(20))   + "\n" +
+                " Throughput 100 readings " +  Double.toString(GetAvgAckCount(100))   + "\n" +
+                " Data Rate 10 readings " +  Double.toString(GetAvgEmitCount(10))   + "\n" +
+                " Data Rate 20 readings " +  Double.toString(GetAvgEmitCount(20))   + "\n" +
+                " Data Rate 100 readings " + Double.toString(GetAvgEmitCount(100))    + "\n" +
+                " Latency Mean " +   Double.toString(hist_latecny.getMean())  + "\n" +
+                " Latency 10 readings " +  Double.toString(GetAvgLatecny_ns(10))   + "\n" +
+                " Latency 20 readings " +  Double.toString(GetAvgLatecny_ns(20))   + "\n" +
+                " Latency 100 readings " +  Double.toString(GetAvgLatecny_ns(100))   + "\n" +
+                " Latency 99 " + Double.toString(hist_latecny.getValueAtPercentile(99.0))  + "\n" +
+                " Latency 99.9 " + Double.toString(hist_latecny.getValueAtPercentile(99.9))  + "\n" +
+                " Failed 10 readings " +  Double.toString(GetAvgFailedCount(10))   + "\n" +
+                " Failed 20 readings " +   Double.toString(GetAvgFailedCount(20))  + "\n" +
+                " Failed 100 readings " +  Double.toString(GetAvgFailedCount(100)) + "\n";
 
         return status;
 

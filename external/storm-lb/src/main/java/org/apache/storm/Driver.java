@@ -22,10 +22,11 @@ public class Driver {
     public static void main( String[] args ) throws Exception {
         Logger logger = new Logger();
         String timeStamp = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
-        String fileName = "LBClient_" + timeStamp + ".log";
+        String fileName = "LBClient.log";
         logger.Initialize("/home/ajayaku2/log/" + fileName);
+        String sZkHost = args[0];
         LBClient client = new LBClient();
-        client.Initialize(logger);
+        client.Initialize(sZkHost,logger);
         Scanner m_oUserInput = new Scanner(System.in);
         while (true)
         {

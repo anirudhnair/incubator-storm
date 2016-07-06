@@ -1,7 +1,5 @@
 package org.apache.storm;
 
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -10,9 +8,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.io.IOException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 /**
  * Created by anirudhnair on 4/15/16.
@@ -38,7 +38,7 @@ public class TopoConfigReader {
 
     TopoConfigReader(String sFilePath)
     {
-        this.filePath = filePath;
+        this.filePath = sFilePath;
         CompConfs = new HashMap<>();
     }
 
@@ -69,6 +69,7 @@ public class TopoConfigReader {
         for (int temp = 0; temp < nList.getLength(); temp++) {
             Node nNode = nList.item(temp);
             // get the name
+            if(nNode.getNodeType() == Node.ELEMENT_NODE) {
             Element eElement = (Element) nNode;
             String topoName = eElement.getAttribute("name");
             CompConfs.put(topoName,new ArrayList<CompConfig>());
@@ -77,16 +78,19 @@ public class TopoConfigReader {
             // get children and fill in component config
             for (int child = 0; child < comps.getLength(); ++child) {
                 Node nChild = comps.item(child);
-                Element eComp = (Element) nChild;
-                String compName = eComp.getAttribute("name");
-                int instance = Integer.parseInt(eComp.getAttribute("instances"));
-                String sLevels = eComp.getAttribute("levels");
-                int levels = 0;
-                if(!"".equals(sLevels)) {
-                    levels = Integer.parseInt(sLevels);
+                if(nChild.getNodeType() == Node.ELEMENT_NODE) {
+                    Element eComp = (Element) nChild;
+                    String compName = eComp.getAttribute("name");
+                    int instance = Integer.parseInt(eComp.getAttribute("instances"));
+                    String sLevels = eComp.getAttribute("levels");
+                    int levels = 0;
+                    if (!"".equals(sLevels)) {
+                        levels = Integer.parseInt(sLevels);
+                    }
+                    CompConfig compConf = new CompConfig(compName, instance, levels);
+                    CompConfs.get(topoName).add(compConf);
                 }
-                CompConfig compConf = new CompConfig(compName,instance,levels);
-                CompConfs.get(topoName).add(compConf);
+            }
             }
         }
         return Common.SUCCESS;

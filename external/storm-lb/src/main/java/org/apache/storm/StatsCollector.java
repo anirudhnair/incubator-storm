@@ -139,14 +139,15 @@ public class StatsCollector {
         m_oNodeStatThread = new Thread(new Runnable() {
             public void run() {
                 // each node get mem and cpu info
-
+                long counter = 1;
                 while(true) {
                     try {
                         Thread.sleep(time_ms);
                     } catch (InterruptedException e1) {
                         m_oLogger.Error(m_oLogger.StackTraceToString(e1));
                     }
-
+                    m_oLogger.Info("Node Stat Collection " + Long.toString(counter));
+                    counter++;
                     for (String nodeIp : m_lNodes) {
                         try {
                             double cpuUsage = m_mNodetoStatClient.get(nodeIp).CPUUsage();
@@ -173,6 +174,7 @@ public class StatsCollector {
 
             }
         });
+        m_oNodeStatThread.start();
         return Common.SUCCESS;
     }
 
@@ -260,6 +262,7 @@ public class StatsCollector {
 
             }
         });
+        m_oTopoStatThread.start();
         return Common.SUCCESS;
     }
 
