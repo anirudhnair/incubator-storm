@@ -139,15 +139,16 @@ public class StatsCollector {
         m_oNodeStatThread = new Thread(new Runnable() {
             public void run() {
                 // each node get mem and cpu info
-                long counter = 1;
+                long counter = 0;
                 while(true) {
                     try {
                         Thread.sleep(time_ms);
                     } catch (InterruptedException e1) {
                         m_oLogger.Error(m_oLogger.StackTraceToString(e1));
                     }
-                    m_oLogger.Info("Node Stat Collection " + Long.toString(counter));
                     counter++;
+                    m_oLogger.Info("Node Stat Collection " + Long.toString(counter));
+
                     for (String nodeIp : m_lNodes) {
                         try {
                             double cpuUsage = m_mNodetoStatClient.get(nodeIp).CPUUsage();
@@ -170,6 +171,14 @@ public class StatsCollector {
                     } catch (Exception e) {
                         m_oLogger.StackTraceToString(e);
                     }
+
+                    if(counter%100 == 0) //every 100 readings, record the node statistics
+                    {
+                        for(String sIp: m_lNodes)
+                        {
+                            m_oLogger.Info("NodeStat Report: " + sIp + " " + m_mNodetoStat.get(sIp).PrintStatus());
+                        }
+                    }
                 }
 
             }
@@ -187,13 +196,14 @@ public class StatsCollector {
     {
         m_oTopoStatThread = new Thread(new Runnable() {
             public void run() {
-
+                long counter = 0;
                 while(true) {
                     try {
                         Thread.sleep(time_ms);
                     } catch (InterruptedException e1) {
                         m_oLogger.Error(m_oLogger.StackTraceToString(e1));
                     }
+                    counter++;
                     // lock the topology list since topology can be added any time
                     ClusterSummary summary = null;
                     try {
@@ -253,6 +263,13 @@ public class StatsCollector {
                         m_mTopotoStat.get(sTopoName).UpdateEmitCount(emitted);
                         m_oLogger.Info("Topology Stat: Node-" + sTopoName + " Acked-" + Long.toString(acked) +
                                 " Failed-" + Long.toString(failed) + " Emitted-" + Long.toString(emitted));
+                    }
+                    if(counter%100 == 0) //every 100 readings, record the node statistics
+                    {
+                        for( String sTopoName: m_lTopologyNames)
+                        {
+                            m_oLogger.Info("TopoStat Report: " + sTopoName + " " + m_mTopotoStat.get(sTopoName).PrintStatus());
+                        }
                     }
                     m_topo_list_lock.unlock();
 

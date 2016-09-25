@@ -61,7 +61,7 @@ public class NodeStatServerImpl implements NodeStatServer.Iface {
             //execute command
             try {
                 Process p = Runtime.getRuntime().exec(new String[]{"bash","-c",cmd});
-                Thread.sleep(500);
+                Thread.sleep(1000);
             // read from file
                 FileInputStream fstream = new FileInputStream(outFile);
                 DataInputStream in = new DataInputStream(fstream);

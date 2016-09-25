@@ -42,40 +42,44 @@ public class DataRateAwareLB extends AbstLoadBalance {
             double acked_rate = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgAckCount(nStatReadings); // last 20 secs
             double data_rate = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgEmitCount(nStatReadings);
 
-            if( data_rate > acked_rate && (data_rate - acked_rate) > diff_threshold_inc && sla_satisfied())
+            if( Math.abs(data_rate - acked_rate) > diff_threshold_dec)
             {
-                if( prev_batch_action == BATCH_ACTION.INC)
-                {
-                    curr_update_value++;
-                    curr_batch_size+= Common.mapInttoPower.get(curr_update_value);
-                    update_bacth_size_all(curr_batch_size);
+                if (data_rate > acked_rate && sla_satisfied()) {
+                    // there is a need to increase the batch size to
+                    // maintain the stability of the system
+                    if (prev_batch_action == BATCH_ACTION.INC) {
+                        curr_update_value++;
+                        curr_batch_size += Common.mapInttoPower.get(curr_update_value);
+                        update_bacth_size_all(curr_batch_size);
 
-                } else // either none or dec action
+                    } else // prev action is either none or dec
+                    {
+                        curr_update_value = 0;
+                        curr_batch_size += Common.mapInttoPower.get(curr_update_value);
+                        update_bacth_size_all(curr_batch_size);
+                    }
+
+                    prev_batch_action = BATCH_ACTION.INC;
+
+                } else if (data_rate < acked_rate)
+                // chance to decrease the batch size and increase
+                // the latency
                 {
-                    curr_update_value = 0;
-                    curr_batch_size+= Common.mapInttoPower.get(curr_update_value);
-                    update_bacth_size_all(curr_batch_size);
+                    if (prev_batch_action == BATCH_ACTION.DEC) {
+                        curr_update_value++;
+                        // the current batch size is decreased
+                        curr_batch_size -= Common.mapInttoPower.get(curr_update_value);
+                        update_bacth_size_all(curr_batch_size);
+                    } else // either none or inc action
+                    {
+                        curr_update_value = 0;
+                        // the current batch size is decreased
+                        curr_batch_size -= Common.mapInttoPower.get(curr_update_value);
+                        update_bacth_size_all(curr_batch_size);
+                    }
+                    prev_batch_action = BATCH_ACTION.DEC;
                 }
-
-                prev_batch_action = BATCH_ACTION.INC;
-
-            } else if (Math.abs(data_rate - acked_rate) < diff_threshold_dec)
-            {
-                if( prev_batch_action == BATCH_ACTION.DEC)
-                {
-                    curr_update_value++;
-                    curr_batch_size-= Common.mapInttoPower.get(curr_update_value);
-                    update_bacth_size_all(curr_batch_size);
-                } else // either none or inc action
-                {
-                    curr_update_value = 0;
-                    curr_batch_size-= Common.mapInttoPower.get(curr_update_value);
-                    update_bacth_size_all(curr_batch_size);
-                }
-
-                prev_batch_action = BATCH_ACTION.DEC;
-
-            } else
+            } else if ( Math.abs(data_rate - acked_rate) <= diff_threshold_dec )
             {
                 prev_batch_action = BATCH_ACTION.NONE;
             }

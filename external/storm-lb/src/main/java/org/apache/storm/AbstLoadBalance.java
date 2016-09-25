@@ -130,6 +130,13 @@ abstract public class AbstLoadBalance implements Runnable{
 
     @Override
     public void run() {
+        // wait for 2 mins before the job stablizes
+        try {
+            Thread.sleep(120000); //2mins
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return;
+        }
         load_balance();
     }
 

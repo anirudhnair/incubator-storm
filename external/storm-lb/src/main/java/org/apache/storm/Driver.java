@@ -105,6 +105,9 @@ public class Driver {
                 } else if(sInput.equals("3")) {
                     topo = null; // todo
                 }
+
+                // topology is submitted
+
                 client.SubmitTopology(topo_name,conf,topo,lb);
             } else if(sInput.equals("2"))
             {
