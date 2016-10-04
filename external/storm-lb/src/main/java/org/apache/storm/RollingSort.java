@@ -37,11 +37,12 @@ public class RollingSort implements ILBTopoIface{
     public static final String SPOUT_ID = "spout";
     public static final String SORT_BOLT_ID ="sort";
 
-    public StormTopology getTopology(Config config) throws IOException {
+    public StormTopology getTopology(Config config, String topoConf, String lbConf, String dataRates) throws
+            IOException {
 
-        TopoConfigReader   oTopoConfig = new TopoConfigReader("/home/ajayaku2/conf/topo_config.xml");
+        TopoConfigReader   oTopoConfig = new TopoConfigReader(topoConf);
         oTopoConfig.Init();
-        LBConfigReader     oLBConfig = new LBConfigReader("/home/ajayaku2/conf/lb_config.xml");
+        LBConfigReader     oLBConfig = new LBConfigReader(lbConf);
         oLBConfig.Init();
         final int spoutNum = oTopoConfig.GetInstance("RollingSort", SPOUT_ID);
         final int boltNum =  oTopoConfig.GetInstance("RollingSort", SORT_BOLT_ID);
@@ -50,7 +51,7 @@ public class RollingSort implements ILBTopoIface{
         final int emitFreq = oTopoConfig.GetInstance("RollingSort", "emit_freq");
         final long statCollectionInterval = Long.parseLong(oLBConfig.GetValue("STAT_COLLECTION","interval"));
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout(SPOUT_ID, new RandomMessageSpout(msgSize,statCollectionInterval), spoutNum);
+        builder.setSpout(SPOUT_ID, new RandomMessageSpout(msgSize,statCollectionInterval,dataRates), spoutNum);
         builder.setBolt(SORT_BOLT_ID, new SortBolt(emitFreq, chunkSize), boltNum).shuffleGrouping(SPOUT_ID);
 
         config.setNumWorkers(oTopoConfig.GetInstance("RollingSort", "workers"));
@@ -84,12 +85,12 @@ public class RollingSort implements ILBTopoIface{
 
         HistogramMetric _histo;
 
-        public RandomMessageSpout(int msg_size, long statIntervalms) throws IOException {
+        public RandomMessageSpout(int msg_size, long statIntervalms,String dataRates) throws IOException {
             stat_interval = statIntervalms;
             sizeInBytes = msg_size;
-            BufferedReader in = new BufferedReader(new java.io.FileReader("/home/ajayaku2/conf/data_rates.txt"));
+            BufferedReader in = new BufferedReader(new java.io.FileReader(dataRates));
             String str;
-            data_rates = new int[720];
+            data_rates = new int[760];
             int count = 0;
             while((str = in.readLine()) != null){
                 data_rates[count] = Integer.parseInt(str);

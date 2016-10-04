@@ -22,11 +22,15 @@ public class Driver {
     public static void main( String[] args ) throws Exception {
         Logger logger = new Logger();
         String timeStamp = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
-        String fileName = "LBClient.log";
-        logger.Initialize("/home/ajayaku2/log/" + fileName);
         String sZkHost = args[0];
+        String filePath = args[1];
+        String topoConf = args[2];
+        String lbConf = args[3];
+        String dataRates = args[4];
+        logger.Initialize(filePath);
+
         LBClient client = new LBClient();
-        client.Initialize(sZkHost,logger);
+        client.Initialize(sZkHost,logger,topoConf,lbConf);
         Scanner m_oUserInput = new Scanner(System.in);
         while (true)
         {
@@ -96,7 +100,7 @@ public class Driver {
                 String topo_name = null;
                 if(sInput.equals("1"))
                 {
-                    topo = new RollingSort().getTopology(conf);
+                    topo = new RollingSort().getTopology(conf,topoConf,lbConf,dataRates);
                     timeStamp = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
                     topo_name = "RollingSort_" + timeStamp;
 

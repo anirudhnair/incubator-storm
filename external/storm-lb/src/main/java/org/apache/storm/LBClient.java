@@ -25,14 +25,14 @@ public class LBClient {
     private TopoConfigReader                m_oTopoConfig;
     private LBConfigReader                  m_oLBConfig;
 
-    public int Initialize(String zkHost, Logger oLogger)
+    public int Initialize(String zkHost, Logger oLogger, String sTopoConf, String sLBPath)
     {
         m_oLogger = oLogger;
         m_mClusterConf = Utils.readStormConfig();
         m_oNimbus = NimbusClient.getConfiguredClient(m_mClusterConf).getClient();
-        m_oTopoConfig = new TopoConfigReader("/home/ajayaku2/conf/topo_config.xml");
+        m_oTopoConfig = new TopoConfigReader(sTopoConf);
         m_oTopoConfig.Init();
-        m_oLBConfig = new LBConfigReader("/home/ajayaku2/conf/lb_config.xml");
+        m_oLBConfig = new LBConfigReader(sLBPath);
         m_oLBConfig.Init();
         // init stat collector
         m_oCollector = new StatsCollector();
