@@ -184,11 +184,11 @@ public class StatsCollector {
                         m_oLogger.StackTraceToString(e);
                     }
 
-                    if(counter%100 == 0) //every 100 readings, record the node statistics
+                    if(counter%5 == 0) //every 100 readings, record the node statistics
                     {
                         for(String sIp: m_lNodes)
                         {
-                            m_oLogger.Info("NodeStat Report: " + sIp + " " + m_mNodetoStat.get(sIp).PrintStatus());
+                            m_oLogger.Info("NodeStatReport: " + sIp + " " + m_mNodetoStat.get(sIp).PrintStatus());
                         }
                     }
                 }
@@ -312,7 +312,7 @@ public class StatsCollector {
                     {
                         for( String sTopoName: m_lTopologyNames)
                         {
-                            m_oLogger.Info("TopoStat Report: " + sTopoName + " " + m_mTopotoStat.get(sTopoName).PrintStatus());
+                            m_oLogger.Info("TopoStatReport: " + sTopoName + " " + m_mTopotoStat.get(sTopoName).PrintStatus());
                         }
                     }
 

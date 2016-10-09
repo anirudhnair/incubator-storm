@@ -214,19 +214,10 @@ public class NodeStat {
     public String PrintStatus()
     {
         String status =
-                " Message Count 10 readings " + Double.toString(GetAvgMessageCount(10)) + "\n" +
-                        " Message Count 20 readings " +  Double.toString(GetAvgMessageCount(20))   + "\n" +
-                        " Message Count 100 readings " +  Double.toString(GetAvgMessageCount(100))   + "\n" +
-                        " CPU Util 10 readings " +  Double.toString(GetAvgCPUUsage(10))   + "\n" +
-                        " CPU Util 20 readings " +  Double.toString(GetAvgCPUUsage(20))   + "\n" +
-                        " CPU Util 100 readings " + Double.toString(GetAvgCPUUsage(100))    + "\n" +
-                        " Mem Usage 10 readings " +  Double.toString(GetAvgMemUsage(10))   + "\n" +
-                        " Mem Usage 20 readings " +  Double.toString(GetAvgMemUsage(20))   + "\n" +
-                        " Mem Usage 100 readings " +  Double.toString(GetAvgMemUsage(100))   + "\n" +
-                        " Power 10 readings " +  Double.toString(GetAvgPowerUsage(10))   + "\n" +
-                        " Power 20 readings " +   Double.toString(GetAvgPowerUsage(20))  + "\n" +
-                        " Power 100 readings " +  Double.toString(GetAvgPowerUsage(100)) + "\n";
-
+                " MessageCount_10 " + Double.toString(GetAvgMessageCount(10)) + " " +
+                        " CPUUtil_10 " +  Double.toString(GetAvgCPUUsage(10))   + " " +
+                        " MemUsage_10 " +  Double.toString(GetAvgMemUsage(10))   + " " +
+                        " Power_10 " +  Double.toString(GetAvgPowerUsage(10));
         return status;
 
 

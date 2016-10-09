@@ -219,21 +219,13 @@ public class TopologyStat {
     public String PrintStatus()
     {
         String status =
-                " Throughput 10 readings " + Double.toString(GetAvgAckCount(10)) + "\n" +
-                " Throughput 20 readings " +  Double.toString(GetAvgAckCount(20))   + "\n" +
-                " Throughput 100 readings " +  Double.toString(GetAvgAckCount(100))   + "\n" +
-                " Data Rate 10 readings " +  Double.toString(GetAvgEmitCount(10))   + "\n" +
-                " Data Rate 20 readings " +  Double.toString(GetAvgEmitCount(20))   + "\n" +
-                " Data Rate 100 readings " + Double.toString(GetAvgEmitCount(100))    + "\n" +
-                " Latency Mean " +   Double.toString(hist_latecny.getMean())  + "\n" +
-                " Latency 10 readings " +  Double.toString(GetAvgLatecny_ns(10))   + "\n" +
-                " Latency 20 readings " +  Double.toString(GetAvgLatecny_ns(20))   + "\n" +
-                " Latency 100 readings " +  Double.toString(GetAvgLatecny_ns(100))   + "\n" +
-                " Latency 99 " + Double.toString(hist_latecny.getValueAtPercentile(99.0))  + "\n" +
-                " Latency 99.9 " + Double.toString(hist_latecny.getValueAtPercentile(99.9))  + "\n" +
-                " Failed 10 readings " +  Double.toString(GetAvgFailedCount(10))   + "\n" +
-                " Failed 20 readings " +   Double.toString(GetAvgFailedCount(20))  + "\n" +
-                " Failed 100 readings " +  Double.toString(GetAvgFailedCount(100)) + "\n";
+                " Throughput_10_readings " + Double.toString(GetAvgAckCount(10)) + " " +
+                " Data_Rate_10_readings " +  Double.toString(GetAvgEmitCount(10))   + " " +
+                " Latency_Mean " +   Double.toString(hist_latecny.getMean())  + " " +
+                " Latency_10_readings " +  Double.toString(GetAvgLatecny_ns(10))   + " " +
+                " Latency_99 " + Double.toString(hist_latecny.getValueAtPercentile(99.0))  + " " +
+                " Latency_ 99.9 " + Double.toString(hist_latecny.getValueAtPercentile(99.9))  + "" +
+                " Failed_10_readings " +  Double.toString(GetAvgFailedCount(10));
 
         return status;
 
