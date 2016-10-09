@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * Created by anirudhnair on 3/8/16.
  */
-public class RollingSort implements ILBTopoIface{
+public class RollingSort implements ILBTopoIface, Serializable{
 
     private static class Cookie {
         public final long time;
@@ -37,7 +37,8 @@ public class RollingSort implements ILBTopoIface{
     public static final String SPOUT_ID = "spout";
     public static final String SORT_BOLT_ID ="sort";
 
-    public StormTopology getTopology(Config config, String topoConf, String lbConf, String dataRates) throws
+    public StormTopology getTopology(Config config, String topoConf, String lbConf, String dataRates, String topoPath)
+            throws
             IOException {
 
         TopoConfigReader   oTopoConfig = new TopoConfigReader(topoConf);
@@ -47,7 +48,7 @@ public class RollingSort implements ILBTopoIface{
         final int spoutNum = oTopoConfig.GetInstance("RollingSort", SPOUT_ID);
         final int boltNum =  oTopoConfig.GetInstance("RollingSort", SORT_BOLT_ID);
         final int msgSize = oTopoConfig.GetInstance("RollingSort", "msg_size");
-        final int chunkSize = 100;
+        final int chunkSize = oTopoConfig.GetInstance("RollingSort", "chunk_size");;
         final int emitFreq = oTopoConfig.GetInstance("RollingSort", "emit_freq");
         final long statCollectionInterval = Long.parseLong(oLBConfig.GetValue("STAT_COLLECTION","interval"));
         TopologyBuilder builder = new TopologyBuilder();
@@ -63,8 +64,8 @@ public class RollingSort implements ILBTopoIface{
     public class RandomMessageSpout extends BaseRichSpout {
 
         private static final long serialVersionUID = -4100642374496292646L;
-        public static final String FIELDS = "message";
-        public static final int DEFAULT_MESSAGE_SIZE = 100;
+        public final String FIELDS = "message";
+        public final int DEFAULT_MESSAGE_SIZE = 100;
         private int sizeInBytes = DEFAULT_MESSAGE_SIZE;
         private long messageCount = 0;
         private SpoutOutputCollector collector;
@@ -105,11 +106,11 @@ public class RollingSort implements ILBTopoIface{
                 _periodNano = Long.MAX_VALUE - 1;
                 _emitAmount = 1;
             }
-
+            this.rand = new Random();
         }
 
         public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
-            this.rand = new Random();
+
             this.collector = collector;
             start_time = System.nanoTime();
             _nextEmitTime = System.nanoTime();
@@ -125,7 +126,6 @@ public class RollingSort implements ILBTopoIface{
             }
             _histo = new HistogramMetric(3600000000000L, 3);
             context.registerMetric("comp-lat-histo", _histo, (int) stat_interval/1000);
-
             // read the data rates
 
         }

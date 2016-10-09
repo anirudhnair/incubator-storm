@@ -6,6 +6,7 @@ import backtype.storm.generated.*;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.utils.NimbusClient;
 import backtype.storm.utils.Utils;
+import org.json.simple.JSONValue;
 
 import java.util.List;
 import java.util.Map;
@@ -24,9 +25,9 @@ public class LBClient {
     private Map                             m_mClusterConf;
     private TopoConfigReader                m_oTopoConfig;
     private LBConfigReader                  m_oLBConfig;
+    private String                          m_sJarLocationNimbus;
 
-    public int Initialize(String zkHost, Logger oLogger, String sTopoConf, String sLBPath)
-    {
+    public int Initialize(String zkHost, Logger oLogger, String sTopoConf, String sLBPath, String sJarPathLocal) throws Exception {
         m_oLogger = oLogger;
         m_mClusterConf = Utils.readStormConfig();
         m_oNimbus = NimbusClient.getConfiguredClient(m_mClusterConf).getClient();
@@ -44,7 +45,10 @@ public class LBClient {
         }
 
         // start the node stat collection
-        m_oCollector.StartNodeStatCollection(Long.parseLong(m_oLBConfig.GetValue("STAT_COLLECTION","interval")));
+        m_oCollector.StartNodeStatCollection(Long.parseLong(m_oLBConfig.GetValue("STAT_COLLECTION", "interval")));
+
+        // start topology stat collection
+        m_oCollector.StartTopologyStatCollection(Long.parseLong(m_oLBConfig.GetValue("STAT_COLLECTION", "interval")));
 
         // connect to zookeeper
         m_oZK = new ZookeeperClient(zkHost,m_oLogger);
@@ -53,6 +57,9 @@ public class LBClient {
             m_oLogger.Error("Exiting LB Client Init due to ZK connection problem");
             return Common.FAILURE;
         }
+
+        // submit jar to nimbus
+        m_sJarLocationNimbus = StormSubmitter.submitJar(m_mClusterConf,sJarPathLocal);
         return Common.SUCCESS;
     }
 
@@ -71,12 +78,14 @@ public class LBClient {
 
         m_oCollector.AddTopologyToStatCollection(sTopoName, conf);
         try {
-            StormSubmitter.submitTopology(sTopoName, conf, topology);
+            String jsonConf = JSONValue.toJSONString(conf);
+            m_oNimbus.submitTopology(sTopoName, m_sJarLocationNimbus,jsonConf, topology);
         } catch (Exception e) {
             m_oLogger.Error(m_oLogger.StackTraceToString(e));
-        } finally {
             kill(sTopoName);
         }
+
+
         m_oLogger.Info("Topology submitted: " + sTopoName);
 
         Thread.sleep(2000);

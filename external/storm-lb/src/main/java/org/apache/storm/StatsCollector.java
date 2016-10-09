@@ -87,7 +87,7 @@ public class StatsCollector {
         return Common.SUCCESS;
     }
 
-    private void GetNodeStatFromTopologyInfo() throws Exception
+    private void GetNodeStatFromTopologyInfo()
     {
         m_oLogger.Info("Get Node stats from topology information");
         Map<String,Long> iptoMsgCount = new HashMap<>();
@@ -95,11 +95,23 @@ public class StatsCollector {
         {
             iptoMsgCount.put(nodeIp, (long)0);
         }
-        ClusterSummary summary = m_oNimbus.getClusterInfo();
+        ClusterSummary summary = null;
+        try {
+            summary = m_oNimbus.getClusterInfo();
+        } catch (Exception e) {
+            m_oLogger.Error(m_oLogger.StackTraceToString(e));
+            return;
+        }
         String id = null;
         for (TopologySummary ts: summary.get_topologies()) {
             id = ts.get_id();
-            TopologyInfo info = m_oNimbus.getTopologyInfo(id);
+            TopologyInfo info = null;
+            try {
+                info = m_oNimbus.getTopologyInfo(id);
+            } catch (Exception e) {
+                m_oLogger.Error(m_oLogger.StackTraceToString(e));
+                continue;
+            }
             for (ExecutorSummary exec: info.get_executors()) {
                 String sHost = exec.get_host();
                 // get transffered count
@@ -160,7 +172,7 @@ public class StatsCollector {
                             m_oLogger.Info("Node Stat: Node-" + nodeIp + " CPU-" + Double.toString(cpuUsage) +
                                     " Mem-" + Double.toString(memUsage) + " Power-" + Double.toString(powerUsage));
                         } catch (TException e) {
-                            m_oLogger.equals(m_oLogger.StackTraceToString(e));
+                            m_oLogger.Error(m_oLogger.StackTraceToString(e));
                             return;
                         }
                     }
@@ -192,7 +204,7 @@ public class StatsCollector {
     *   Topology stat collection is for acked tupls and failed tuples count.
     *   For latency there is a storm metrics way of collecting ata using a httpserver
      */
-    public int StartTopologyStatCollection(final int time_ms) throws Exception
+    public int StartTopologyStatCollection(final long time_ms)
     {
         m_oTopoStatThread = new Thread(new Runnable() {
             public void run() {
@@ -209,7 +221,9 @@ public class StatsCollector {
                     try {
                         summary = m_oNimbus.getClusterInfo();
                     } catch (Exception e) {
-                        m_oLogger.StackTraceToString(e);                    }
+                        m_oLogger.Error(m_oLogger.StackTraceToString(e));
+                        continue;
+                    }
                     m_topo_list_lock.lock();
                     // go through the topology list and get stats for each topology
                     for( String sTopoName: m_lTopologyNames) {
@@ -233,47 +247,78 @@ public class StatsCollector {
                             m_oLogger.Error(m_oLogger.StackTraceToString(e));
 
                         }
+                        if(info == null)
+                        {
+                            m_oLogger.Error("Topology info returned null for " + sTopoName);
+                            continue;
+                        }
                         long acked = 0;
                         long failed = 0;
                         long emitted = 0;
-                        for (ExecutorSummary exec: info.get_executors()) {
+                        List<ExecutorSummary> execs = info.get_executors();
+                        if(execs == null || execs.isEmpty())
+                        {
+                            m_oLogger.Error("Executor info returned null or empty for topology " + sTopoName);
+                            continue;
+                        }
+                        SpoutStats stats = null;
+                        ExecutorStats exec_stats = null;
+                        ExecutorSummary spout_summary = null;
+                        for (ExecutorSummary exec: execs) {
                             if ("spout".equals(exec.get_component_id())) {
-                                SpoutStats stats = exec.get_stats().get_specific().get_spout();
-                                Map<String, Long> failedMap = stats.get_failed().get(":all-time");
-                                Map<String, Long> ackedMap = stats.get_acked().get(":all-time");
-                                Map<String, Long> emittedMap = exec.get_stats().get_emitted().get(":all-time");
-                                if (ackedMap != null) {
-                                    for (String key: ackedMap.keySet()) {
-                                        if (failedMap != null) {
-                                            Long tmp = failedMap.get(key);
-                                            if (tmp != null) {
-                                                failed += tmp;
-                                            }
-                                        }
-                                        long ackVal = ackedMap.get(key);
-                                        acked += ackVal;
-                                        long emitVal = emittedMap.get(key);
-                                        emitted += emitVal;
-                                    }
+                                spout_summary = exec;
+                                exec_stats = exec.get_stats();
+                                if (exec_stats == null) {
+                                    m_oLogger.Error("Executor stats returned null or empty");
+                                    break;
+                                }
+                                stats = exec_stats.get_specific().get_spout();
+                                if (exec_stats == null) {
+                                    m_oLogger.Error("Executor spout stats returned null or empty");
+                                    break;
                                 }
                             }
                         }
-                        m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
-                        m_mTopotoStat.get(sTopoName).UpdateFailedCount(failed);
-                        m_mTopotoStat.get(sTopoName).UpdateEmitCount(emitted);
-                        m_oLogger.Info("Topology Stat: Node-" + sTopoName + " Acked-" + Long.toString(acked) +
-                                " Failed-" + Long.toString(failed) + " Emitted-" + Long.toString(emitted));
+                        if(stats != null) {
+                            Map<String, Long> failedMap = stats.get_failed().get(":all-time");
+                            Map<String, Long> ackedMap = stats.get_acked().get(":all-time");
+                            Map<String, Long> emittedMap = spout_summary.get_stats().get_emitted().get(":all-time");
+                            if (ackedMap != null) {
+                                for (String key : ackedMap.keySet()) {
+                                    if (failedMap != null) {
+                                        Long tmp = failedMap.get(key);
+                                        if (tmp != null) {
+                                            failed += tmp;
+                                        }
+                                    }
+                                    long ackVal = ackedMap.get(key);
+                                    acked += ackVal;
+                                    long emitVal = emittedMap.get(key);
+                                    emitted += emitVal;
+                                }
+                            }
+                            m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
+                            m_mTopotoStat.get(sTopoName).UpdateFailedCount(failed);
+                            m_mTopotoStat.get(sTopoName).UpdateEmitCount(emitted);
+                            m_oLogger.Info("Topology Stat: " + sTopoName + " Count: " + counter + " Acked: " + Long
+                                    .toString(acked) +
+                                    " Failed: " + Long.toString(failed) + " Emitted: " + Long.toString(emitted));
+                        }
+
+
                     }
-                    if(counter%100 == 0) //every 100 readings, record the node statistics
+
+                    if(counter%5 == 0) //every 100 readings, record the node statistics
                     {
                         for( String sTopoName: m_lTopologyNames)
                         {
                             m_oLogger.Info("TopoStat Report: " + sTopoName + " " + m_mTopotoStat.get(sTopoName).PrintStatus());
                         }
                     }
+
+
+
                     m_topo_list_lock.unlock();
-
-
 
                 }
 
@@ -286,7 +331,8 @@ public class StatsCollector {
     /*
     add topology name to list and also setup the httpserver
      */
-    public int AddTopologyToStatCollection(String topo_name, Config conf) {
+    public int AddTopologyToStatCollection( String topo_name,  Config conf) {
+
         m_topo_list_lock.lock();
         m_oLogger.Info("Adding " + topo_name + " to stats collection list");
         m_lTopologyNames.add(topo_name);
@@ -294,8 +340,8 @@ public class StatsCollector {
         TopologyStat stat = new TopologyStat();
         m_mTopotoStat.put(topo_name, stat);
         // create server
-        HttpMetricsServerImpl server = new HttpMetricsServerImpl(conf,stat);
-        m_mTopotoServer.put(topo_name,server);
+        HttpMetricsServerImpl server = new HttpMetricsServerImpl(conf, stat);
+        m_mTopotoServer.put(topo_name, server);
         server.serve();
         String url = server.getUrl();
         conf.registerMetricsConsumer(backtype.storm.metric.LoggingMetricsConsumer.class);
@@ -303,7 +349,8 @@ public class StatsCollector {
         m_oLogger.Info("Created http server to receive stats from the topology");
         m_topo_list_lock.unlock();
         return Common.SUCCESS;
-    };
+
+    }
 
     public ArrayList<String> GetNodeList()
     {

@@ -20,17 +20,18 @@ public class Driver {
 // responsible for the UI and starting the LB Client
 
     public static void main( String[] args ) throws Exception {
-        Logger logger = new Logger();
-        String timeStamp = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
-        String sZkHost = args[0];
-        String filePath = args[1];
-        String topoConf = args[2];
-        String lbConf = args[3];
-        String dataRates = args[4];
+        Logger logger           = new Logger();
+        String timeStamp        = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
+        String sZkHost          = args[0];
+        String filePath         = args[1];
+        String topoConf         = args[2];
+        String lbConf           = args[3];
+        String dataRates        = args[4];
+        String stormTopoJar     = args[5];
         logger.Initialize(filePath);
 
         LBClient client = new LBClient();
-        client.Initialize(sZkHost,logger,topoConf,lbConf);
+        client.Initialize(sZkHost,logger,topoConf,lbConf,stormTopoJar);
         Scanner m_oUserInput = new Scanner(System.in);
         while (true)
         {
@@ -100,8 +101,8 @@ public class Driver {
                 String topo_name = null;
                 if(sInput.equals("1"))
                 {
-                    topo = new RollingSort().getTopology(conf,topoConf,lbConf,dataRates);
-                    timeStamp = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
+                    topo = new RollingSort().getTopology(conf,topoConf,lbConf,dataRates,stormTopoJar);
+                    timeStamp = new SimpleDateFormat("HH_mm_ss_SSS").format(Calendar.getInstance().getTime());
                     topo_name = "RollingSort_" + timeStamp;
 
                 } else if(sInput.equals("2")) {
