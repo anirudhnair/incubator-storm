@@ -173,7 +173,6 @@ public class StatsCollector {
                                     " Mem-" + Double.toString(memUsage) + " Power-" + Double.toString(powerUsage));
                         } catch (TException e) {
                             m_oLogger.Error(m_oLogger.StackTraceToString(e));
-                            return;
                         }
                     }
 
