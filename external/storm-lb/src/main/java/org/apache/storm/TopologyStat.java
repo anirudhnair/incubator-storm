@@ -221,10 +221,10 @@ public class TopologyStat {
         String status =
                 " Throughput_10_readings " + Double.toString(GetAvgAckCount(10)) + " " +
                 " Data_Rate_10_readings " +  Double.toString(GetAvgEmitCount(10))   + " " +
-                " Latency_Mean " +   Double.toString(hist_latecny.getMean())  + " " +
-                " Latency_10_readings " +  Double.toString(GetAvgLatecny_ns(10))   + " " +
-                " Latency_99 " + Double.toString(hist_latecny.getValueAtPercentile(99.0))  + " " +
-                " Latency_ 99.9 " + Double.toString(hist_latecny.getValueAtPercentile(99.9))  + "" +
+                " Latency_Mean " +   Double.toString(hist_latecny.getMean()/1000000)  + " " +
+                " Latency_10_readings " +  Double.toString(GetAvgLatecny_ns(10)/1000000)   + " " +
+                " Latency_99 " + Double.toString(hist_latecny.getValueAtPercentile(99.0)/1000000)  + " " +
+                " Latency_ 99.9 " + Double.toString(hist_latecny.getValueAtPercentile(99.9)/1000000)  + "" +
                 " Failed_10_readings " +  Double.toString(GetAvgFailedCount(10));
 
         return status;
