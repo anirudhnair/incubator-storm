@@ -66,7 +66,7 @@ public class NodeStat {
     public void AddCPUUsage(float cpu)
     {
         m_oLockW.lock();
-        memoryUsageList.addLast(new FieldValue<Float>(System.currentTimeMillis(), cpu));
+        cpuUsageCountList.addLast(new FieldValue<Float>(System.currentTimeMillis(), cpu));
         m_oLockW.unlock();
 
     }

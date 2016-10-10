@@ -89,10 +89,11 @@ public class StatsCollector {
 
     private void GetNodeStatFromTopologyInfo()
     {
-        m_oLogger.Info("Get Node stats from topology information");
+        m_oLogger.Info("GetNodeStatFromTopologyInfo: Get Node stats from topology information");
         Map<String,Long> iptoMsgCount = new HashMap<>();
         for(String nodeIp: m_lNodes)
         {
+            m_oLogger.Info("GetNodeStatFromTopologyInfo: Adding node to list " + nodeIp);
             iptoMsgCount.put(nodeIp, (long)0);
         }
         ClusterSummary summary = null;
@@ -131,6 +132,7 @@ public class StatsCollector {
                         msg_count+=count;
                     }
                 }
+                m_oLogger.Info("GetNodeStatFromTopologyInfo: " + exec.get_component_id() + " " + Long.toString(msg_count));
                 Long curr_count = iptoMsgCount.get(sHost);
                 iptoMsgCount.put(sHost,curr_count+msg_count);
             }
