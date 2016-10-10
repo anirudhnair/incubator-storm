@@ -52,7 +52,7 @@ public class RollingSort implements ILBTopoIface, Serializable{
         final int emitFreq = oTopoConfig.GetInstance("RollingSort", "emit_freq");
         final long statCollectionInterval = Long.parseLong(oLBConfig.GetValue("STAT_COLLECTION","interval"));
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout(SPOUT_ID, new RandomMessageSpout(msgSize,statCollectionInterval,dataRates), spoutNum);
+        builder.setSpout(SPOUT_ID, new RandomMessageSpout(msgSize,statCollectionInterval,dataRates,spoutNum), spoutNum);
         builder.setBolt(SORT_BOLT_ID, new SortBolt(emitFreq, chunkSize), boltNum).shuffleGrouping(SPOUT_ID);
 
         config.setNumWorkers(oTopoConfig.GetInstance("RollingSort", "workers"));
@@ -86,7 +86,8 @@ public class RollingSort implements ILBTopoIface, Serializable{
 
         HistogramMetric _histo;
 
-        public RandomMessageSpout(int msg_size, long statIntervalms,String dataRates) throws IOException {
+        public RandomMessageSpout(int msg_size, long statIntervalms,String dataRates, int spout_count) throws
+                IOException {
             stat_interval = statIntervalms;
             sizeInBytes = msg_size;
             BufferedReader in = new BufferedReader(new java.io.FileReader(dataRates));
@@ -94,7 +95,7 @@ public class RollingSort implements ILBTopoIface, Serializable{
             data_rates = new int[760];
             int count = 0;
             while((str = in.readLine()) != null){
-                data_rates[count] = Integer.parseInt(str);
+                data_rates[count] = Integer.parseInt(str)/spout_count;
                 count++;
             }
 
