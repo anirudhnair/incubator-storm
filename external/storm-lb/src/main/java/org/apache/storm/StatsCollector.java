@@ -132,7 +132,8 @@ public class StatsCollector {
                         msg_count+=count;
                     }
                 }
-                m_oLogger.Info("GetNodeStatFromTopologyInfo: " + exec.get_component_id() + " " + Long.toString(msg_count));
+                m_oLogger.Info("GetNodeStatFromTopologyInfo: " + sHost + " " + id + " " + exec.get_component_id()  +
+                        " " + Long.toString(msg_count));
                 Long curr_count = iptoMsgCount.get(sHost);
                 iptoMsgCount.put(sHost,curr_count+msg_count);
             }
@@ -142,7 +143,7 @@ public class StatsCollector {
         for (Map.Entry<String, Long> entry : iptoMsgCount.entrySet()) {
             String key = entry.getKey();
             Long value = entry.getValue();
-            m_oLogger.Info("Node Stat: Node-" + key + " Msg Count:" + value.toString());
+            m_oLogger.Info("Node Stat: Node-" + key + " Msg Count: " + value.toString());
             m_mNodetoStat.get(key).AddMessageCount(value);
         }
 
@@ -274,7 +275,7 @@ public class StatsCollector {
                                     break;
                                 }
                                 stats = exec_stats.get_specific().get_spout();
-                                if (exec_stats == null) {
+                                if (stats == null) {
                                     m_oLogger.Error("Executor spout stats returned null or empty");
                                     break;
                                 }
