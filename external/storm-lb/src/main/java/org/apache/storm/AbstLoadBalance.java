@@ -25,7 +25,7 @@ abstract public class AbstLoadBalance implements Runnable{
     protected Logger                           m_oLogger;
     protected LBConfigReader                   m_oConfig;
     protected LBTopologyInfo                   m_oTopoInfo;
-    protected Nimbus.Client                    m_oNimbusClient;
+    protected NimbusClientLB                    m_oNimbusClient;
     protected Common.SLA_TYPE                  m_oSLAType;
 
     public static enum BATCH_ACTION {INC, DEC, NONE};
@@ -47,7 +47,7 @@ abstract public class AbstLoadBalance implements Runnable{
 
     public int Initialize(Common.LOAD_BALANCER type, String sTopoName,StatsCollector oCollect, ZookeeperClient
             zk_client,
-                    LBConfigReader oConfig, Logger oLogger, Nimbus.Client nimbus_client)
+                    LBConfigReader oConfig, Logger oLogger, NimbusClientLB nimbus_client)
     {
         m_oLBType = type;
         m_sTopoName = sTopoName;
@@ -126,7 +126,7 @@ abstract public class AbstLoadBalance implements Runnable{
 
     abstract public void load_balance();
     abstract public int Init(StatsCollector oCollect, String sTopoName, ZookeeperClient zk_client, LBConfigReader
-            oConfig, Logger oLogger,Nimbus.Client nimbus_client);
+            oConfig, Logger oLogger,NimbusClientLB nimbus_client);
 
     @Override
     public void run() {

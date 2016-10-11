@@ -12,7 +12,8 @@ public class LoadAwareLB extends AbstLoadBalance {
     }
 
     @Override
-    public int Init(StatsCollector oCollect, String sTopoName, ZookeeperClient zk_client, LBConfigReader oConfig, Logger oLogger, Nimbus.Client nimbus_client) {
+    public int Init(StatsCollector oCollect, String sTopoName, ZookeeperClient zk_client, LBConfigReader oConfig,
+                    Logger oLogger, NimbusClientLB nimbus_client) {
         return 0;
     }
 }

@@ -20,17 +20,17 @@ public class LBClient {
 
     private StatsCollector                  m_oCollector;
     private Logger                          m_oLogger;
-    private Nimbus.Client                   m_oNimbus;
+    private NimbusClientLB                    m_oNimbus;
     private ZookeeperClient                 m_oZK;
-    private Map                             m_mClusterConf;
+
     private TopoConfigReader                m_oTopoConfig;
     private LBConfigReader                  m_oLBConfig;
     private String                          m_sJarLocationNimbus;
 
     public int Initialize(String zkHost, Logger oLogger, String sTopoConf, String sLBPath, String sJarPathLocal) throws Exception {
         m_oLogger = oLogger;
-        m_mClusterConf = Utils.readStormConfig();
-        m_oNimbus = NimbusClient.getConfiguredClient(m_mClusterConf).getClient();
+
+        m_oNimbus = new NimbusClientLB();
         m_oTopoConfig = new TopoConfigReader(sTopoConf);
         m_oTopoConfig.Init();
         m_oLBConfig = new LBConfigReader(sLBPath);
@@ -59,14 +59,14 @@ public class LBClient {
         }
 
         // submit jar to nimbus
-        m_sJarLocationNimbus = StormSubmitter.submitJar(m_mClusterConf,sJarPathLocal);
+        m_sJarLocationNimbus = m_oNimbus.submitJar(sJarPathLocal);
         return Common.SUCCESS;
     }
 
     public void kill(String name) throws Exception {
         KillOptions opts = new KillOptions();
         opts.set_wait_secs(0);
-        m_oNimbus.killTopologyWithOpts(name, opts);
+        m_oNimbus.kill(name, opts);
     }
 
     public int SubmitTopology(String sTopoName, Config conf, StormTopology topology, Common.LOAD_BALANCER lb) throws Exception

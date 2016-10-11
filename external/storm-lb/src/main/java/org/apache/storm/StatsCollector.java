@@ -40,7 +40,7 @@ public class StatsCollector {
         }
     }
 
-    private Nimbus.Client                   m_oNimbus;
+    private NimbusClientLB                   m_oNimbus;
     private Thread 					        m_oNodeStatThread;
     private Thread                          m_oTopoStatThread;
     private ArrayList<String>               m_lNodes; //list of worker nodes in the cluster
@@ -52,7 +52,7 @@ public class StatsCollector {
     private Map<String,TopologyStat>        m_mTopotoStat;
     private Map<String,HttpMetricsServerImpl> m_mTopotoServer;
 
-    public int Initialize(Nimbus.Client oClient, Logger logger) throws Exception
+    public int Initialize(NimbusClientLB oClient, Logger logger) throws Exception
     {
         m_oLogger = logger;
         //instantiate

@@ -9,7 +9,7 @@ public class DataRateAwareLB extends AbstLoadBalance {
 
     @Override
     public int Init(StatsCollector oCollect, String sTopoName, ZookeeperClient zk_client, LBConfigReader
-            oConfig, Logger oLogger,Nimbus.Client nimbus_client)
+            oConfig, Logger oLogger,NimbusClientLB nimbus_client)
     {
         super.Initialize(Common.LOAD_BALANCER.DATA_RATE_AWARE, sTopoName,oCollect, zk_client, oConfig, oLogger, nimbus_client);
         return Common.SUCCESS;

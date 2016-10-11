@@ -42,7 +42,7 @@ public class LBTopologyInfo {
         m_oZK       = zk;
     }
 
-    public int Init(Nimbus.Client client)
+    public int Init(NimbusClientLB client)
     {
         ClusterSummary summary = null;
         try {

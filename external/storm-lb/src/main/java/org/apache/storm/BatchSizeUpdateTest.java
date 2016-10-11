@@ -34,23 +34,7 @@ public class BatchSizeUpdateTest {
 
     public static void main(String[] args) throws InterruptedException {
 
-        Logger logger = new Logger();
-        logger.Initialize("test_log");
-        ZookeeperClient zk = new ZookeeperClient("localhost",logger);
-        zk.Connect();
-        Map clusterConf = Utils.readStormConfig();
-        Nimbus.Client oNimbus = NimbusClient.getConfiguredClient(clusterConf).getClient();
-        LBTopologyInfo   m_oTopoInfo = new LBTopologyInfo("word",logger,zk);
-        m_oTopoInfo.Init(oNimbus);
-        int batch_size = 10;
-        int size  = 0;
-        while(true){
-            batch_size = Math.max(10,(size + 10)%60);
-            System.out.println(batch_size);
-            update_bacth_size_all(batch_size,m_oTopoInfo);
-            size+=10;
-            Thread.sleep(30000);
-        }
+
 
     }
 }
