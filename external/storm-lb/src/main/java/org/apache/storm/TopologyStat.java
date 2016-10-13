@@ -13,6 +13,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class TopologyStat {
 
+
+
     // input data rate
     private LinkedList<FieldValue<Long>>    tupleDataRateCountList;
     private long                            totalIncomingTupleCount;

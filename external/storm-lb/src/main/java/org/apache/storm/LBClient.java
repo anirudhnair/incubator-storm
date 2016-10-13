@@ -20,7 +20,8 @@ public class LBClient {
 
     private StatsCollector                  m_oCollector;
     private Logger                          m_oLogger;
-    private NimbusClientLB                    m_oNimbus;
+    private NimbusClientLB                  m_oNimbus;
+    private NimbusClientLB                  m_oTopoStatNimbus;
     private ZookeeperClient                 m_oZK;
 
     private TopoConfigReader                m_oTopoConfig;
@@ -31,6 +32,7 @@ public class LBClient {
         m_oLogger = oLogger;
 
         m_oNimbus = new NimbusClientLB();
+        m_oTopoStatNimbus = new NimbusClientLB();
         m_oTopoConfig = new TopoConfigReader(sTopoConf);
         m_oTopoConfig.Init();
         m_oLBConfig = new LBConfigReader(sLBPath);
@@ -38,7 +40,7 @@ public class LBClient {
         // init stat collector
         m_oCollector = new StatsCollector();
         try {
-            m_oCollector.Initialize(m_oNimbus,m_oLogger);
+            m_oCollector.Initialize(m_oNimbus,m_oTopoStatNimbus,m_oLogger);
         } catch (Exception e) {
             m_oLogger.Error(m_oLogger.StackTraceToString(e));
             return Common.FAILURE;

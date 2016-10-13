@@ -40,7 +40,8 @@ public class StatsCollector {
         }
     }
 
-    private NimbusClientLB                   m_oNimbus;
+    private NimbusClientLB                  m_oNimbus;
+    private NimbusClientLB                  m_oTopoStatNimbus;
     private Thread 					        m_oNodeStatThread;
     private Thread                          m_oTopoStatThread;
     private ArrayList<String>               m_lNodes; //list of worker nodes in the cluster
@@ -52,7 +53,7 @@ public class StatsCollector {
     private Map<String,TopologyStat>        m_mTopotoStat;
     private Map<String,HttpMetricsServerImpl> m_mTopotoServer;
 
-    public int Initialize(NimbusClientLB oClient, Logger logger) throws Exception
+    public int Initialize(NimbusClientLB oClient, NimbusClientLB oNodeStatNimbus, Logger logger) throws Exception
     {
         m_oLogger = logger;
         //instantiate
@@ -66,6 +67,7 @@ public class StatsCollector {
 
 
         m_oNimbus = oClient;
+        m_oTopoStatNimbus = oNodeStatNimbus;
         // get the nodelist
         List<SupervisorSummary> superviosrList = m_oNimbus.getClusterInfo().get_supervisors();
         for(SupervisorSummary sup: superviosrList)
@@ -89,6 +91,8 @@ public class StatsCollector {
 
     private void GetNodeStatFromTopologyInfo()
     {
+
+
         m_oLogger.Info("GetNodeStatFromTopologyInfo: Get Node stats from topology information");
         Map<String,Long> iptoMsgCount = new HashMap<>();
         for(String nodeIp: m_lNodes)
@@ -114,6 +118,9 @@ public class StatsCollector {
                 continue;
             }
             for (ExecutorSummary exec: info.get_executors()) {
+                if("__eventlogger".equals(exec.get_component_id()) ||
+                        "__metricsbacktype.storm.metric.LoggingMetricsConsumer".equals(exec.get_component_id()) ||
+                        "__metricsbacktype.storm.metric.HttpForwardingMetricsConsumer".equals(exec.get_component_id())) continue;
                 String sHost = exec.get_host();
                 // get transffered count
                 long msg_count = 0;
@@ -183,7 +190,7 @@ public class StatsCollector {
                     try {
                         GetNodeStatFromTopologyInfo();
                     } catch (Exception e) {
-                        m_oLogger.StackTraceToString(e);
+                        m_oLogger.Error(m_oLogger.StackTraceToString(e));
                     }
 
                     if(counter%5 == 0) //every 100 readings, record the node statistics
@@ -221,7 +228,7 @@ public class StatsCollector {
                     // lock the topology list since topology can be added any time
                     ClusterSummary summary = null;
                     try {
-                        summary = m_oNimbus.getClusterInfo();
+                        summary = m_oTopoStatNimbus.getClusterInfo();
                     } catch (Exception e) {
                         m_oLogger.Error(m_oLogger.StackTraceToString(e));
                         continue;
@@ -244,7 +251,7 @@ public class StatsCollector {
 
                         TopologyInfo info = null;
                         try {
-                            info = m_oNimbus.getTopologyInfo(id);
+                            info = m_oTopoStatNimbus.getTopologyInfo(id);
                         } catch (Exception e) {
                             m_oLogger.Error(m_oLogger.StackTraceToString(e));
 
