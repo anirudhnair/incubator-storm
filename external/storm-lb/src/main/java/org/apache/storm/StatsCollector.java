@@ -197,7 +197,8 @@ public class StatsCollector {
                     {
                         for(String sIp: m_lNodes)
                         {
-                            m_oLogger.Info("NodeStatReport: " + sIp + " " + m_mNodetoStat.get(sIp).PrintStatus());
+                            m_oLogger.Info("NodeStatReport: " +  Long.toString(System.currentTimeMillis()) + " " + sIp + " " +
+                                    m_mNodetoStat.get(sIp).PrintStatus());
                         }
                     }
                 }
@@ -321,7 +322,8 @@ public class StatsCollector {
                     {
                         for( String sTopoName: m_lTopologyNames)
                         {
-                            m_oLogger.Info("TopoStatReport: " + sTopoName + " " + m_mTopotoStat.get(sTopoName).PrintStatus());
+                            m_oLogger.Info("TopoStatReport: " +  Long.toString(System.currentTimeMillis()) + " " +
+                                    sTopoName + " " + m_mTopotoStat.get(sTopoName).PrintStatus());
                         }
                     }
 

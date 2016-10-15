@@ -214,10 +214,10 @@ public class NodeStat {
     public String PrintStatus()
     {
         String status =
-                " MessageCount_10 " + Double.toString(GetAvgMessageCount(10)) + " " +
-                        " CPUUtil_10 " +  Double.toString(GetAvgCPUUsage(10))   + " " +
-                        " MemUsage_10 " +  Double.toString(GetAvgMemUsage(10))   + " " +
-                        " Power_10 " +  Double.toString(GetAvgPowerUsage(10));
+                " MessageCount_5 " + Double.toString(GetAvgMessageCount(5)) + " " +
+                        " CPUUtil_5 " +  Double.toString(GetAvgCPUUsage(5))   + " " +
+                        " MemUsage_5 " +  Double.toString(GetAvgMemUsage(5))   + " " +
+                        " Power_5 " +  Double.toString(GetAvgPowerUsage(5));
         return status;
 
 
