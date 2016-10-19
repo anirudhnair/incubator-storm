@@ -54,7 +54,7 @@ abstract public class AbstLoadBalance implements Runnable{
         m_oZK = zk_client;
         m_oNimbusClient = nimbus_client;
         m_oTopoInfo = new LBTopologyInfo(m_sTopoName,oLogger,m_oZK);
-        m_oTopoInfo.Init(m_oNimbusClient);
+
         m_oStatsCollector = oCollect;
         m_oLogger = oLogger;
         m_oConfig = oConfig;
@@ -133,6 +133,10 @@ abstract public class AbstLoadBalance implements Runnable{
         // wait for 2 mins before the job stablizes
         try {
             Thread.sleep(120000); //2mins
+            if( m_oTopoInfo.Init(m_oNimbusClient) == Common.FAILURE)
+            {
+                m_oLogger.Error("LB Init failed while getting topology information");
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
             return;

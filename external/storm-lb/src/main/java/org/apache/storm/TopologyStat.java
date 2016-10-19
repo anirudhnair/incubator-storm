@@ -50,6 +50,24 @@ public class TopologyStat {
         m_oLockW                = m_oReadWriteLock.writeLock();
     }
 
+    public long TotalAcked()
+    {
+        long count = 0;
+        m_oLockR.lock();
+        count = totalTupleAckedCount;
+        m_oLockR.unlock();
+        return count;
+    }
+
+    public long TotalEmitted()
+    {
+        long count = 0;
+        m_oLockR.lock();
+        count = totalIncomingTupleCount;
+        m_oLockR.unlock();
+        return count;
+    }
+
     public void UpdateAckedCount(long total_acked)
     {
         m_oLockW.lock();

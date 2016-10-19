@@ -416,7 +416,7 @@
                                            (when-not (= new_batch_size old_batch_size)
                                              (.setBatchSize (:receive-queue executor-data) new_batch_size)
                                              (.setBatchSize (:batch-transfer-queue executor-data) new_batch_size)
-                                             (log-message "Set the batch size of " dynamic-batching-node-id " to " new_batch_size))))
+                                                 (log-message "Set the batch size of " dynamic-batching-node-id " to " new_batch_size))))
 
 
         callback-dynamic-batching-interval (fn cb [dynamic-batching-node-id]

@@ -48,6 +48,7 @@ public class LBTopologyInfo {
         try {
             summary = client.getClusterInfo();
         } catch (Exception e) {
+            m_oLogger.Error("LBTopologyInfo: Init failed");
             m_oLogger.Error(m_oLogger.StackTraceToString(e));
             return Common.FAILURE;
         }

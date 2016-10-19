@@ -93,11 +93,11 @@ public class StatsCollector {
     {
 
 
-        m_oLogger.Info("GetNodeStatFromTopologyInfo: Get Node stats from topology information");
+        //m_oLogger.Info("GetNodeStatFromTopologyInfo: Get Node stats from topology information");
         Map<String,Long> iptoMsgCount = new HashMap<>();
         for(String nodeIp: m_lNodes)
         {
-            m_oLogger.Info("GetNodeStatFromTopologyInfo: Adding node to list " + nodeIp);
+            //m_oLogger.Info("GetNodeStatFromTopologyInfo: Adding node to list " + nodeIp);
             iptoMsgCount.put(nodeIp, (long)0);
         }
         ClusterSummary summary = null;
@@ -139,8 +139,8 @@ public class StatsCollector {
                         msg_count+=count;
                     }
                 }
-                m_oLogger.Info("GetNodeStatFromTopologyInfo: " + sHost + " " + id + " " + exec.get_component_id()  +
-                        " " + Long.toString(msg_count));
+                //m_oLogger.Info("GetNodeStatFromTopologyInfo: " + sHost + " " + id + " " + exec.get_component_id()  +
+                  //      " " + Long.toString(msg_count));
                 Long curr_count = iptoMsgCount.get(sHost);
                 iptoMsgCount.put(sHost,curr_count+msg_count);
             }
@@ -150,7 +150,7 @@ public class StatsCollector {
         for (Map.Entry<String, Long> entry : iptoMsgCount.entrySet()) {
             String key = entry.getKey();
             Long value = entry.getValue();
-            m_oLogger.Info("Node Stat: Node-" + key + " Msg Count: " + value.toString());
+            //m_oLogger.Info("Node Stat: Node-" + key + " Msg Count: " + value.toString());
             m_mNodetoStat.get(key).AddMessageCount(value);
         }
 
@@ -179,8 +179,8 @@ public class StatsCollector {
                             m_mNodetoStat.get(nodeIp).AddCPUUsage((float) cpuUsage);
                             m_mNodetoStat.get(nodeIp).AddMemUsgae((float) memUsage);
                             m_mNodetoStat.get(nodeIp).AddPowerUsage((float) powerUsage);
-                            m_oLogger.Info("Node Stat: Node-" + nodeIp + " CPU-" + Double.toString(cpuUsage) +
-                                    " Mem-" + Double.toString(memUsage) + " Power-" + Double.toString(powerUsage));
+                            //m_oLogger.Info("Node Stat: Node-" + nodeIp + " CPU-" + Double.toString(cpuUsage) +
+                                   // " Mem-" + Double.toString(memUsage) + " Power-" + Double.toString(powerUsage));
                         } catch (TException e) {
                             m_oLogger.Error(m_oLogger.StackTraceToString(e));
                         }

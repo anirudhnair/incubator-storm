@@ -74,8 +74,8 @@ public class Driver {
                 System.out.println("Enter Input ");
                 System.out.println("=========================");
                 String sLB = m_oUserInput.nextLine();
-                if( ! sInput.equals("1") && !sInput.equals("2") && !sInput.equals("3")
-                        && !sInput.equals("4"))
+                if( ! sLB.equals("1") && !sLB.equals("2") && !sLB.equals("3")
+                        && !sLB.equals("4"))
                 {
                     System.out.println("Invalid input");
                     continue;
