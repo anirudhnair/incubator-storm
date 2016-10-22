@@ -295,16 +295,19 @@ public class StatsCollector {
                             Map<String, Long> emittedMap = spout_summary.get_stats().get_emitted().get(":all-time");
                             if (ackedMap != null) {
                                 for (String key : ackedMap.keySet()) {
-                                    if (failedMap != null) {
-                                        Long tmp = failedMap.get(key);
-                                        if (tmp != null) {
-                                            failed += tmp;
+                                    if ("default".equals(key)) {
+                                        if (failedMap != null) {
+                                            Long tmp = failedMap.get(key);
+                                            if (tmp != null) {
+                                                failed += tmp;
+                                            }
                                         }
+                                        long ackVal = ackedMap.get(key);
+                                        acked += ackVal;
+                                        long emitVal = emittedMap.get(key);
+                                        emitted += emitVal;
+                                        break;
                                     }
-                                    long ackVal = ackedMap.get(key);
-                                    acked += ackVal;
-                                    long emitVal = emittedMap.get(key);
-                                    emitted += emitVal;
                                 }
                             }
                             m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
