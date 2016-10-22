@@ -94,7 +94,9 @@ public class DataRateAwareLB extends AbstLoadBalance {
                     " SLA: " + Boolean.toString(bSLA) +
                     " BATCH ACTION: " + mapBatchActionToString.get(prev_batch_action) +
                     " UPDATE VALUE: " + Long.toString(curr_update_value) +
-                    " BATCH SIZE: " + Long.toString(curr_batch_size);
+                    " BATCH SIZE: " + Long.toString(curr_batch_size) +
+                    " Threshold Inc: " + Double.toString(diff_threshold_inc) +
+                    " Threshold Dec: " + Double.toString(diff_threshold_dec);
             m_oLogger.Info(log);
             System.out.println(log);
             try {
