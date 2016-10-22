@@ -30,7 +30,7 @@ public class DataRateAwareLB extends AbstLoadBalance {
         BATCH_ACTION prev_batch_action = BATCH_ACTION.NONE;
         double diff_threshold_inc = Double.parseDouble(m_oConfig.GetValue(Common.mapLBTypeToName.get(m_oLBType),
                 "diff_threshold_inc"));
-        double diff_threshold_dec = 10000; //Double.parseDouble(m_oConfig.GetValue(Common.mapLBTypeToName.get
+        double diff_threshold_dec = 0.9*diff_threshold_inc;
         // (m_oLBType),
                 //"diff_threshold_dec"));
         int curr_batch_size = 1; // job always starts with size 1
@@ -49,43 +49,39 @@ public class DataRateAwareLB extends AbstLoadBalance {
             double data_rate = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgEmitCount(nStatReadings);
             double throughput = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgAckCount(nStatReadings);
             boolean bSLA = sla_satisfied();
-            if( Math.abs(emited - acked) > diff_threshold_dec)
+            if( emited - acked > diff_threshold_inc && bSLA)
             {
+                if (prev_batch_action == BATCH_ACTION.INC) {
+                    curr_update_value = Math.min(curr_update_value + 1, 7);
+                    curr_batch_size = Math.min(130, curr_batch_size + Common.mapInttoPower.get(curr_update_value));
 
-                if (emited > acked && bSLA) {
-                    // there is a need to increase the batch size to
-                    // maintain the stability of the system
-                    if (prev_batch_action == BATCH_ACTION.INC) {
-                        curr_update_value = Math.min(curr_update_value + 1, 7);
-                        curr_batch_size = Math.min(130, curr_batch_size + Common.mapInttoPower.get(curr_update_value));
-
-                    } else // prev action is either none or dec
-                    {
-                        curr_update_value = 0;
-                        curr_batch_size = Math.min(130, curr_batch_size + Common.mapInttoPower.get(curr_update_value));
-                    }
-
-                    prev_batch_action = BATCH_ACTION.INC;
-
-                } else if (emited < acked)
-                // chance to decrease the batch size and increase
-                // the latency
+                } else // prev action is either none or dec
                 {
-                    if (prev_batch_action == BATCH_ACTION.DEC) {
-                        curr_update_value = Math.min(curr_update_value + 1, 7);
-                        // the current batch size is decreased
-                        curr_batch_size = Math.max(1, curr_batch_size - Common.mapInttoPower.get(curr_update_value));
-                    } else // either none or inc action
-                    {
-                        curr_update_value = 0;
-                        // the current batch size is decreased
-                        curr_batch_size = Math.max(1, curr_batch_size - Common.mapInttoPower.get(curr_update_value));
-                    }
-                    prev_batch_action = BATCH_ACTION.DEC;
+                    curr_update_value = 0;
+                    curr_batch_size = Math.min(130, curr_batch_size + Common.mapInttoPower.get(curr_update_value));
                 }
-
+                diff_threshold_inc = diff_threshold_inc*1.1;
+                diff_threshold_dec = 0.9*diff_threshold_inc;
+                prev_batch_action = BATCH_ACTION.INC;
                 update_bacth_size_all(curr_batch_size);
-            } else if ( Math.abs(emited - acked) <= diff_threshold_dec )
+
+            } else if (emited - acked < diff_threshold_dec)
+            {
+                if (prev_batch_action == BATCH_ACTION.DEC) {
+                    curr_update_value = Math.min(curr_update_value + 1, 7);
+                    // the current batch size is decreased
+                    curr_batch_size = Math.max(1, curr_batch_size - Common.mapInttoPower.get(curr_update_value));
+                } else // either none or inc action
+                {
+                    curr_update_value = 0;
+                    // the current batch size is decreased
+                    curr_batch_size = Math.max(1, curr_batch_size - Common.mapInttoPower.get(curr_update_value));
+                }
+                //diff_threshold_inc = diff_threshold_inc*0.9;
+                //diff_threshold_dec = 0.9*diff_threshold_inc;
+                prev_batch_action = BATCH_ACTION.DEC;
+                update_bacth_size_all(curr_batch_size);
+            } else
             {
                 prev_batch_action = BATCH_ACTION.NONE;
             }
