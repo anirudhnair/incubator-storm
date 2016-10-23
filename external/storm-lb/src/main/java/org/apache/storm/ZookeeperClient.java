@@ -59,7 +59,7 @@ public class ZookeeperClient {
             m_oLogger.Error(m_oLogger.StackTraceToString(e));
             return Common.FAILURE;
         }
-        m_oLogger.Info("Added data to path " + path + " successfully.");
+        //m_oLogger.Info("Added data to path " + path + " successfully.");
         return Common.SUCCESS;
     }
 

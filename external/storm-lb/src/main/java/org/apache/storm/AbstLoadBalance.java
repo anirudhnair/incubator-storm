@@ -73,7 +73,7 @@ abstract public class AbstLoadBalance implements Runnable{
                 " Period:" + Long.toString(m_nLBPeriod) +
                 " StartAfter:" + Long.toString(m_nStartAfter) +
                 " SLA:" + Long.toString(m_nSLA) +
-                " Stats Period:" + Integer.toString(m_nStatPeriod) +
+                " Stats Period:" + Long.toString(m_nStatCollectionInterval) +
                 " SLA Type:" + Common.mapSLATypeToStr.get(m_oSLAType);
 
         return sParams;

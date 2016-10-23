@@ -65,7 +65,7 @@ public class LBExecutorInfo {
     {
         String size_path  = "/storm/" + Common.DYNAMIC_BATCHING_ROOT + "/"  + Common.DynamicBatchZnodeSize(m_sTopoID,
                 m_sCompID,m_nID);
-        m_oLogger.Info("Setting batch size " + PrintExectorInfo() + " batch_size:" + Integer.toString(size));
+        //m_oLogger.Info("Setting batch size " + PrintExectorInfo() + " batch_size:" + Integer.toString(size));
         return m_oZk.SetData(size_path,Integer.toString(size).getBytes());
     }
 
