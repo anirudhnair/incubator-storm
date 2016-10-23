@@ -29,7 +29,7 @@ public class Driver {
         String dataRates        = args[4];
         String stormTopoJar     = args[5];
         logger.Initialize(filePath);
-
+        logger.Info("Cmd Args: " + args.toString());
         LBClient client = new LBClient();
         client.Initialize(sZkHost,logger,topoConf,lbConf,stormTopoJar);
         Scanner m_oUserInput = new Scanner(System.in);
