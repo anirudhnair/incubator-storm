@@ -48,8 +48,9 @@ public class DataRateAwareLB extends AbstLoadBalance {
             long emited = m_oStatsCollector.GetTopoStat(m_sTopoName).TotalEmitted();
             double data_rate = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgEmitCount(nStatReadings);
             double throughput = m_oStatsCollector.GetTopoStat(m_sTopoName).GetAvgAckCount(nStatReadings);
+            long diff = emited - acked;
             boolean bSLA = sla_satisfied();
-            if( emited - acked > diff_threshold_inc && bSLA)
+            if( diff > diff_threshold_inc && bSLA)
             {
                 if (prev_batch_action == BATCH_ACTION.INC) {
                     curr_update_value = Math.min(curr_update_value + 1, 7);
@@ -60,12 +61,12 @@ public class DataRateAwareLB extends AbstLoadBalance {
                     curr_update_value = 0;
                     curr_batch_size = Math.min(130, curr_batch_size + Common.mapInttoPower.get(curr_update_value));
                 }
-                diff_threshold_inc = diff_threshold_inc*1.1;
-                diff_threshold_dec = 0.9*diff_threshold_inc;
+                diff_threshold_inc = diff*1.05;
+                diff_threshold_dec = 0.95*diff_threshold_inc;
                 prev_batch_action = BATCH_ACTION.INC;
                 update_bacth_size_all(curr_batch_size);
 
-            } else if (emited - acked < diff_threshold_dec)
+            } else if (diff < diff_threshold_dec)
             {
                 if (prev_batch_action == BATCH_ACTION.DEC) {
                     curr_update_value = Math.min(curr_update_value + 1, 7);
@@ -90,7 +91,7 @@ public class DataRateAwareLB extends AbstLoadBalance {
                     " Throughput: " + Double.toString(throughput) +
                     " Ack Count: " + Double.toString(acked)  +
                     " Emit Count: " + Double.toString(emited)  +
-                    " Diff: " + Double.toString(emited-acked)  +
+                    " Diff: " + Double.toString(diff)  +
                     " SLA: " + Boolean.toString(bSLA) +
                     " BATCH ACTION: " + mapBatchActionToString.get(prev_batch_action) +
                     " UPDATE VALUE: " + Long.toString(curr_update_value) +
