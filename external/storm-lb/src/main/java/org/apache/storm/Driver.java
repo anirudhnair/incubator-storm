@@ -5,6 +5,7 @@ import backtype.storm.generated.StormTopology;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
@@ -29,7 +30,7 @@ public class Driver {
         String dataRates        = args[4];
         String stormTopoJar     = args[5];
         logger.Initialize(filePath);
-        logger.Info("Cmd Args: " + args.toString());
+        logger.Info("Cmd Args: " + Arrays.toString(args));
         LBClient client = new LBClient();
         client.Initialize(sZkHost,logger,topoConf,lbConf,stormTopoJar);
         Scanner m_oUserInput = new Scanner(System.in);
