@@ -28,8 +28,9 @@ public class DataRateAwareLB extends AbstLoadBalance {
 
         // init
         BATCH_ACTION prev_batch_action = BATCH_ACTION.NONE;
-        double diff_threshold_inc = Double.parseDouble(m_oConfig.GetValue(Common.mapLBTypeToName.get(m_oLBType),
+        double diff_threshold_min = Double.parseDouble(m_oConfig.GetValue(Common.mapLBTypeToName.get(m_oLBType),
                 "diff_threshold_inc"));
+        double diff_threshold_inc = diff_threshold_min;
         double diff_threshold_dec = 0.9*diff_threshold_inc;
         // (m_oLBType),
                 //"diff_threshold_dec"));
@@ -61,8 +62,8 @@ public class DataRateAwareLB extends AbstLoadBalance {
                     curr_update_value = 0;
                     curr_batch_size = Math.min(130, curr_batch_size + Common.mapInttoPower.get(curr_update_value));
                 }
-                diff_threshold_inc = diff*1.05;
-                diff_threshold_dec = 0.95*diff_threshold_inc;
+                diff_threshold_inc = diff*1.1;
+                diff_threshold_dec = 0.9*diff_threshold_inc;
                 prev_batch_action = BATCH_ACTION.INC;
                 update_bacth_size_all(curr_batch_size);
 
@@ -78,8 +79,8 @@ public class DataRateAwareLB extends AbstLoadBalance {
                     // the current batch size is decreased
                     curr_batch_size = Math.max(1, curr_batch_size - Common.mapInttoPower.get(curr_update_value));
                 }
-                //diff_threshold_inc = diff_threshold_inc*0.9;
-                //diff_threshold_dec = 0.9*diff_threshold_inc;
+                diff_threshold_inc = Math.max(diff_threshold_min,diff_threshold_inc*0.95);
+                diff_threshold_dec = 0.95*diff_threshold_inc;
                 prev_batch_action = BATCH_ACTION.DEC;
                 update_bacth_size_all(curr_batch_size);
             } else
