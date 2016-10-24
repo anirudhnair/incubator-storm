@@ -37,7 +37,7 @@ public class DataRateAwareLB extends AbstLoadBalance {
         int curr_batch_size = 1; // job always starts with size 1
         int curr_update_value = 0;
         int nStatReadings = (int)(m_nLBPeriod/m_nStatCollectionInterval);
-        m_oLogger.Info("Stats Reading: " Integer.toString(nStatReadings));
+        m_oLogger.Info("Stats Reading: " + Integer.toString(nStatReadings));
         long iter = 0;
         while(true)
         {
