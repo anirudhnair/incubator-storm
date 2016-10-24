@@ -37,6 +37,7 @@ public class DataRateAwareLB extends AbstLoadBalance {
         int curr_batch_size = 1; // job always starts with size 1
         int curr_update_value = 0;
         int nStatReadings = (int)(m_nLBPeriod/m_nStatCollectionInterval);
+        m_oLogger.Info("Stats Reading: " Integer.toString(nStatReadings));
         long iter = 0;
         while(true)
         {
@@ -88,17 +89,17 @@ public class DataRateAwareLB extends AbstLoadBalance {
                 prev_batch_action = BATCH_ACTION.NONE;
             }
             String log = " Iter: " + Long.toString(iter) +
-                    " Data Rate: " + Double.toString(data_rate) +
+                    " DataRate: " + Double.toString(data_rate) +
                     " Throughput: " + Double.toString(throughput) +
-                    " Ack Count: " + Double.toString(acked)  +
-                    " Emit Count: " + Double.toString(emited)  +
+                    " AckCount: " + Double.toString(acked)  +
+                    " EmitCount: " + Double.toString(emited)  +
                     " Diff: " + Double.toString(diff)  +
                     " SLA: " + Boolean.toString(bSLA) +
-                    " BATCH ACTION: " + mapBatchActionToString.get(prev_batch_action) +
-                    " UPDATE VALUE: " + Long.toString(curr_update_value) +
-                    " BATCH SIZE: " + Long.toString(curr_batch_size) +
-                    " Threshold Inc: " + Double.toString(diff_threshold_inc) +
-                    " Threshold Dec: " + Double.toString(diff_threshold_dec);
+                    " BATCH_ACTION: " + mapBatchActionToString.get(prev_batch_action) +
+                    " UPDATE_VALUE: " + Long.toString(curr_update_value) +
+                    " BATCH_SIZE: " + Long.toString(curr_batch_size) +
+                    " Threshold_Inc: " + Double.toString(diff_threshold_inc) +
+                    " Threshold_Dec: " + Double.toString(diff_threshold_dec);
             m_oLogger.Info(log);
             System.out.println(log);
             try {
