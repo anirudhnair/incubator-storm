@@ -182,6 +182,7 @@ public class StatsCollector {
                             //m_oLogger.Info("Node Stat: Node-" + nodeIp + " CPU-" + Double.toString(cpuUsage) +
                                    // " Mem-" + Double.toString(memUsage) + " Power-" + Double.toString(powerUsage));
                         } catch (TException e) {
+                            m_oLogger.Error("NodeStatCollection: Error getting stats from " + nodeIp);
                             m_oLogger.Error(m_oLogger.StackTraceToString(e));
                         }
                     }
