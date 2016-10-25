@@ -72,6 +72,7 @@ public class StatsCollector {
         List<SupervisorSummary> superviosrList = m_oNimbus.getClusterInfo().get_supervisors();
         for(SupervisorSummary sup: superviosrList)
         {
+            m_oLogger.Info("Host added" + sup.get_host());
             m_lNodes.add(sup.get_host());
         }
 

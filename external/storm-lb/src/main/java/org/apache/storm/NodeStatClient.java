@@ -10,7 +10,7 @@ import org.apache.thrift.transport.TTransportException;
 /**
  * Created by anirudhnair on 3/7/16.
  */
-public class NodeStatClient {
+public class    NodeStatClient {
 
     private NodeStatServer.Client m_oClient;
     private Logger m_oLogger;
