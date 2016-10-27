@@ -291,11 +291,12 @@ public class StatsCollector {
                                 }
                             }
                         }
+                        
                         if(stats != null) {
                             Map<String, Long> failedMap = stats.get_failed().get(":all-time");
                             Map<String, Long> ackedMap = stats.get_acked().get(":all-time");
                             Map<String, Long> emittedMap = spout_summary.get_stats().get_emitted().get(":all-time");
-                            if (ackedMap != null) {
+                            if (ackedMap != null && emittedMap != null) {
                                 for (String key : ackedMap.keySet()) {
                                     if ("default".equals(key)) {
                                         if (failedMap != null) {
