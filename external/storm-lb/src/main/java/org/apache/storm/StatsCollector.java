@@ -303,7 +303,7 @@ public class StatsCollector {
                             }
                         }
 
-                        if(stats != null) {
+                        if(stats != null && spout_summary.get_stats() != null) {
                             Map<String, Long> failedMap = stats.get_failed().get(":all-time");
                             Map<String, Long> ackedMap = stats.get_acked().get(":all-time");
                             Map<String, Long> emittedMap = spout_summary.get_stats().get_emitted().get(":all-time");
@@ -324,13 +324,15 @@ public class StatsCollector {
                                     }
                                 }
                             }
-                            m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
-                            m_mTopotoStat.get(sTopoName).UpdateFailedCount(failed);
-                            m_mTopotoStat.get(sTopoName).UpdateEmitCount(emitted);
-                            m_oLogger.Info("Topology Stat: " + sTopoName + " Count: " + counter + " Acked: " + Long
-                                    .toString(acked) +
-                                    " Failed: " + Long.toString(failed) + " Emitted: " + Long.toString(emitted));
                         }
+
+                        m_mTopotoStat.get(sTopoName).UpdateAckedCount(acked);
+                        m_mTopotoStat.get(sTopoName).UpdateFailedCount(failed);
+                        m_mTopotoStat.get(sTopoName).UpdateEmitCount(emitted);
+                        m_oLogger.Info("Topology Stat: " + sTopoName + " Count: " + counter + " Acked: " + Long
+                                .toString(acked) +
+                                " Failed: " + Long.toString(failed) + " Emitted: " + Long.toString(emitted));
+
 
 
                     }
