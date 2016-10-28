@@ -91,7 +91,11 @@ public class StatsCollector {
         for(String nodeIp: m_lNodes)
         {
             NodeStatClient client = new NodeStatClient();
-            client.Init(nodeIp,m_oLogger);
+            if( Common.FAILURE == client.Init(nodeIp,m_oLogger))
+            {
+                m_oLogger.Error("Unable to create client to the Stats Server on " + nodeIp);
+                System.exit(1);
+            }
             m_mNodetoStatClient.put(nodeIp, client);
             m_mNodetoStat.put(nodeIp,new NodeStat());
         }
