@@ -53,6 +53,17 @@ public class StatsCollector {
     private Map<String,TopologyStat>        m_mTopotoStat;
     private Map<String,HttpMetricsServerImpl> m_mTopotoServer;
 
+    public void Wait(long millisec)
+    {
+
+        try {
+            m_oNodeStatThread.join(millisec);
+            m_oTopoStatThread.join(millisec);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public int Initialize(NimbusClientLB oClient, NimbusClientLB oNodeStatNimbus, Logger logger) throws Exception
     {
         m_oLogger = logger;
@@ -291,7 +302,7 @@ public class StatsCollector {
                                 }
                             }
                         }
-                        
+
                         if(stats != null) {
                             Map<String, Long> failedMap = stats.get_failed().get(":all-time");
                             Map<String, Long> ackedMap = stats.get_acked().get(":all-time");

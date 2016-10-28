@@ -29,11 +29,51 @@ public class Driver {
         String lbConf           = args[3];
         String dataRates        = args[4];
         String stormTopoJar     = args[5];
+        String TopologyNameShort = args[6];
+        String loadBalanceTypeShort = args[7];
         logger.Initialize(filePath);
         logger.Info("Cmd Args: " + Arrays.toString(args));
         LBClient client = new LBClient();
         client.Initialize(sZkHost,logger,topoConf,lbConf,stormTopoJar);
+        Common.LOAD_BALANCER lb = Common.LOAD_BALANCER.NONE;
+        if(loadBalanceTypeShort.equals("D"))
+        {
+            lb = Common.LOAD_BALANCER.DATA_RATE_AWARE;
+        } else if(loadBalanceTypeShort.equals("L"))
+        {
+            lb = Common.LOAD_BALANCER.LOAD_AWARE;
+        } else if(loadBalanceTypeShort.equals("E"))
+        {
+            lb = Common.LOAD_BALANCER.ENERGY_AWARE;
+        } else if(loadBalanceTypeShort.equals("N"))
+        {
+            lb = Common.LOAD_BALANCER.NONE;
+        }
+
+
+        Config conf = new Config();
+        StormTopology topo = null;
+        String topo_name = null;
+        if(TopologyNameShort.equals("R"))
+        {
+            topo = new RollingSort().getTopology(conf,topoConf,lbConf,dataRates,stormTopoJar);
+            timeStamp = new SimpleDateFormat("HH_mm_ss_SSS").format(Calendar.getInstance().getTime());
+            topo_name = "RollingSort_" + timeStamp;
+
+        } else if(TopologyNameShort.equals("W")) {
+            topo = null; // todo
+        } else if(TopologyNameShort.equals("S")) {
+            topo = null; // todo
+        }
+
+        // topology is submitted
+
+        client.SubmitTopology(topo_name,conf,topo,lb);
+        client.Wait(124*60*1000);// 2hrs 4 mins = 124 mins = 124*60 secs = 124*60*1000 millisecs
+        
+        /*
         Scanner m_oUserInput = new Scanner(System.in);
+
         while (true)
         {
             System.out.println("=========================");
@@ -131,7 +171,7 @@ public class Driver {
             } catch (InterruptedException e) {
                 System.out.print(e.toString());
             }
-        }
+        }*/
     }
 
 

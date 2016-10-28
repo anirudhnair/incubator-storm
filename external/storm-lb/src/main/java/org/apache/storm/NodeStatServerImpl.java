@@ -29,7 +29,7 @@ public class NodeStatServerImpl implements NodeStatServer.Iface {
         try {
             CpuPerc perc = sigar.getCpuPerc();
             cpu_perc_usage = perc.getCombined() * 100;
-        } catch (SigarException se) {
+        } catch (Exception se) {
             return 0.0;
         }
         return cpu_perc_usage;

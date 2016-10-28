@@ -28,6 +28,11 @@ public class LBClient {
     private LBConfigReader                  m_oLBConfig;
     private String                          m_sJarLocationNimbus;
 
+    public void Wait(long msWait)
+    {
+        m_oCollector.Wait(msWait);
+    }
+
     public int Initialize(String zkHost, Logger oLogger, String sTopoConf, String sLBPath, String sJarPathLocal) throws Exception {
         m_oLogger = oLogger;
 
