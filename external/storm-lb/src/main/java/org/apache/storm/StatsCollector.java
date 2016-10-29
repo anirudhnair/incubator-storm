@@ -104,7 +104,7 @@ public class StatsCollector {
 
         return Common.SUCCESS;
     }
-
+/*
     private void GetNodeStatFromTopologyInfo()
     {
 
@@ -171,7 +171,7 @@ public class StatsCollector {
         }
 
     }
-
+*/
     public int StartNodeStatCollection(final long time_ms)
     {
         m_oNodeStatThread = new Thread(new Runnable() {
@@ -189,12 +189,15 @@ public class StatsCollector {
 
                     for (String nodeIp : m_lNodes) {
                         try {
-                            double cpuUsage = m_mNodetoStatClient.get(nodeIp).CPUUsage();
-                            double memUsage = m_mNodetoStatClient.get(nodeIp).MemUsage();
-                            double powerUsage = m_mNodetoStatClient.get(nodeIp).PowerUsgae();
-                            m_mNodetoStat.get(nodeIp).AddCPUUsage((float) cpuUsage);
-                            m_mNodetoStat.get(nodeIp).AddMemUsgae((float) memUsage);
-                            m_mNodetoStat.get(nodeIp).AddPowerUsage((float) powerUsage);
+                            ThriftStat nodeStat = m_mNodetoStatClient.get(nodeIp).GetStat();
+                            if(nodeStat.getCpu() > 0.0)
+                                m_mNodetoStat.get(nodeIp).AddCPUUsage((float) nodeStat.getCpu());
+                            if(nodeStat.getMem() > 0.0)
+                                m_mNodetoStat.get(nodeIp).AddMemUsgae((float) nodeStat.getMem());
+                            if(nodeStat.getPow() > 0.0)
+                                m_mNodetoStat.get(nodeIp).AddPowerUsage((float) nodeStat.getPow());
+                            if(nodeStat.getNet() > 0.0)
+                                m_mNodetoStat.get(nodeIp).AddNetworkUsage((float) nodeStat.getNet());
                             //m_oLogger.Info("Node Stat: Node-" + nodeIp + " CPU-" + Double.toString(cpuUsage) +
                                    // " Mem-" + Double.toString(memUsage) + " Power-" + Double.toString(powerUsage));
                         } catch (Exception e) {
@@ -204,11 +207,11 @@ public class StatsCollector {
                     }
 
                     // from each topology get the total messages in each node
-                    try {
+                    /* try {
                         GetNodeStatFromTopologyInfo();
                     } catch (Exception e) {
                         m_oLogger.Error(m_oLogger.StackTraceToString(e));
-                    }
+                    } */
 
                     if(counter%5 == 0) //every 100 readings, record the node statistics
                     {

@@ -45,7 +45,7 @@ public class NodeStatServerImpl implements NodeStatServer.Iface {
             long actualUsed = mem.getActualUsed();
             long per1Mem = actualFree + actualUsed;
             mem_perc_usage = ((double)actualUsed / (double)per1Mem) * 100.0;
-        } catch (SigarException se)
+        } catch (Exception se)
         {
             return 0.0;
         }
@@ -77,10 +77,39 @@ public class NodeStatServerImpl implements NodeStatServer.Iface {
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return 0.0;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return 0.0;
             }
 
             // return
         }
         else return 0.0;
+    }
+
+    @Override
+    public double GetNetUsage() throws TException {
+        try {
+            FileInputStream fstream = new FileInputStream("/tmp/network");
+            DataInputStream in = new DataInputStream(fstream);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String strLine = br.readLine();
+            double net = Double.parseDouble(strLine)/1000000;
+            return net;
+        } catch( Exception e)
+        {
+            e.printStackTrace();
+            return 0.0;
+        }
+    }
+
+    @Override
+    public ThriftStat GetStat() throws TException {
+        ThriftStat stat = new ThriftStat();
+        stat.setCpu(GetCPUUsage());
+        stat.setMem(GetMemUsage());
+        stat.setPow(GetPowerUsage());
+        stat.setNet(GetNetUsage());
+        return stat;
     }
 }

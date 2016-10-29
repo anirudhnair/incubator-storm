@@ -19,8 +19,8 @@ public class NodeStat {
 
 
 
-    private LinkedList<FieldValue<Long>>    messageCountList;
-    private long                               totalMessageCount;
+    //private LinkedList<FieldValue<Long>>    messageCountList;
+    //private long                               totalMessageCount;
 
     // memory
     private LinkedList<FieldValue<Float>>      memoryUsageList;
@@ -31,30 +31,34 @@ public class NodeStat {
     //power
     private LinkedList<FieldValue<Float>>      powerUsageCountList;
 
+    //network
+    private LinkedList<FieldValue<Float>>      networkUsageCountList;
+
     private ReentrantReadWriteLock        m_oReadWriteLock;
     private Lock                          m_oLockR;
     private Lock 						  m_oLockW;
 
 
     public NodeStat() {
-        messageCountList  = new LinkedList<>();
+        //messageCountList  = new LinkedList<>();
         memoryUsageList   = new LinkedList<>();
         cpuUsageCountList = new LinkedList<>();
         powerUsageCountList = new LinkedList<>();
+        networkUsageCountList = new LinkedList<>();
         m_oReadWriteLock  = new ReentrantReadWriteLock();
         m_oLockR          = m_oReadWriteLock.readLock();
         m_oLockW          = m_oReadWriteLock.writeLock();
-        totalMessageCount = 0;
+        //totalMessageCount = 0;
     }
 
-    public void AddMessageCount(long count)
+    /*public void AddMessageCount(long count)
     {
         long diff = count - totalMessageCount;
         m_oLockW.lock();
         messageCountList.addLast(new FieldValue<Long>(System.currentTimeMillis(), diff));
         m_oLockW.unlock();
         totalMessageCount+=diff;
-    }
+    }*/
 
     public void AddMemUsgae(float mem)
     {
@@ -78,8 +82,15 @@ public class NodeStat {
         m_oLockW.unlock();
     }
 
+    public void AddNetworkUsage( float net)
+    {
+        m_oLockW.lock();
+        networkUsageCountList.addLast(new FieldValue<Float>(System.currentTimeMillis(), net));
+        m_oLockW.unlock();
+    }
+
     //return message count / sec
-    public double GetAvgMessageCount(int readings)
+    /*public double GetAvgMessageCount(int readings)
     {
         m_oLockR.lock();
         long sum = 0;
@@ -107,7 +118,7 @@ public class NodeStat {
     public FieldValue<Long> GetMessageCountList()
     {
         return (FieldValue<Long>)messageCountList.clone();
-    }
+    }*/
 
     public double GetAvgMemUsage(int readings) {
         m_oLockR.lock();
@@ -139,6 +150,32 @@ public class NodeStat {
         double sum = 0.0;
         int count = 0;
         Iterator<FieldValue<Float>> itr = cpuUsageCountList.descendingIterator();
+        while(itr.hasNext())
+        {
+            count++;
+            FieldValue<Float> cpuU = itr.next();
+            sum+=cpuU.value_;
+            if(count == readings) break;
+        }
+        m_oLockR.unlock();
+
+        if(count > 0)
+            return sum/count;
+        else return sum;
+    }
+
+    public FieldValue<Float> GetNetworkUsageList()
+    {
+        return (FieldValue<Float>)networkUsageCountList.clone();
+    }
+
+
+    public double GetAvgNetworkUsage(int readings)
+    {
+        m_oLockR.lock();
+        double sum = 0.0;
+        int count = 0;
+        Iterator<FieldValue<Float>> itr = networkUsageCountList.descendingIterator();
         while(itr.hasNext())
         {
             count++;
@@ -214,7 +251,7 @@ public class NodeStat {
     public String PrintStatus()
     {
         String status =
-                " MessageCount_5 " + Double.toString(GetAvgMessageCount(5)) + " " +
+                        "Network_5" + "  " + Double.toString(GetAvgNetworkUsage(5)) +
                         " CPUUtil_5 " +  Double.toString(GetAvgCPUUsage(5))   + " " +
                         " MemUsage_5 " +  Double.toString(GetAvgMemUsage(5))   + " " +
                         " Power_5 " +  Double.toString(GetAvgPowerUsage(5));

@@ -44,6 +44,7 @@ public class    NodeStatClient {
 
     public double MemUsage() throws TException
     {
+
         return m_oClient.GetMemUsage();
     }
 
@@ -51,5 +52,10 @@ public class    NodeStatClient {
     public double PowerUsgae() throws TException
     {
         return m_oClient.GetPowerUsage();
+    }
+
+    public ThriftStat GetStat() throws  TException
+    {
+        return m_oClient.GetStat();
     }
 }
