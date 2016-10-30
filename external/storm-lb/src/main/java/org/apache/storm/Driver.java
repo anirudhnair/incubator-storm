@@ -24,14 +24,14 @@ public class Driver {
         Logger logger           = new Logger();
         String timeStamp        = new SimpleDateFormat("HH:mm:ss:SSS").format(Calendar.getInstance().getTime());
         String sZkHost          = args[0];
-        String filePath         = args[1];
-        String topoConf         = args[2];
-        String lbConf           = args[3];
-        String dataRates        = args[4];
-        String stormTopoJar     = args[5];
-        String TopologyNameShort = args[6];
-        String loadBalanceTypeShort = args[7];
-        logger.Initialize(filePath);
+        String topoConf         = args[1];
+        String lbConf         = args[2];
+        String dataRates           = args[3];
+        String stormTopoJar        = args[4];
+        String TopologyNameShort     = args[5];
+        String loadBalanceTypeShort = args[6];
+        String topoName = args[7];
+        logger.Initialize("/home/ajayaku2/log/" + topoName);
         logger.Info("Cmd Args: " + Arrays.toString(args));
         LBClient client = new LBClient();
         client.Initialize(sZkHost,logger,topoConf,lbConf,stormTopoJar);
@@ -53,12 +53,12 @@ public class Driver {
 
         Config conf = new Config();
         StormTopology topo = null;
-        String topo_name = null;
+
         if(TopologyNameShort.equals("R"))
         {
-            topo = new RollingSort().getTopology(conf,topoConf,lbConf,dataRates,stormTopoJar);
+            topo = new RollingSort().getTopology(conf, topoConf, lbConf, dataRates, stormTopoJar);
             timeStamp = new SimpleDateFormat("HH_mm_ss_SSS").format(Calendar.getInstance().getTime());
-            topo_name = "RollingSort_" + timeStamp;
+
 
         } else if(TopologyNameShort.equals("W")) {
             topo = null; // todo
@@ -68,7 +68,7 @@ public class Driver {
 
         // topology is submitted
 
-        client.SubmitTopology(topo_name,conf,topo,lb);
+        client.SubmitTopology(topoName,conf,topo,lb);
         client.Wait(124*60*1000);// 2hrs 4 mins = 124 mins = 124*60 secs = 124*60*1000 millisecs
 
         /*
