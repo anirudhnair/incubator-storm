@@ -238,7 +238,13 @@ public class TopologyStat {
 
     public String PrintStatus()
     {
+        double acked = TotalAcked();
+        double emited = TotalEmitted();
+        double diff = emited - acked;
         String status = Long.toString(System.currentTimeMillis()) + " " +
+                " Emitted " + Double.toString(emited) + " " +
+                " Acked " +  Double.toString(acked)   + " " +
+                " Diff " +  Double.toString(diff)   + " " +
                 " Throughput_5 " + Double.toString(GetAvgAckCount(5)) + " " +
                 " Data_Rate_5 " +  Double.toString(GetAvgEmitCount(5))   + " " +
                 " Latency_Mean " +   Double.toString(hist_latecny.getMean()/1000000)  + " " +
